@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Microsoft Internship Prep — Moses</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #080B0F;
+    --surface: #0D1117;
+    --border: #1A2030;
+    --muted: #607080;
+    --text: #C8D8E8;
+    --dim: #405060;
+  }
+
+  body {
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: #111; }
+  ::-webkit-scrollbar-thumb { background: #2A3A4A; border-radius: 2px; }
+
+  /* ── Header ── */
+  #header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 28px 16px;
+    position: sticky; top: 0;
+    background: var(--bg);
+    z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+  }
+  #header-title { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: .15em; color: #fff; }
+  #header-sub { font-size: 10px; color: var(--dim); letter-spacing: .08em; margin-top: 2px; }
+  #progress-bar-wrap { flex: 1; min-width: 160px; max-width: 260px; }
+  #progress-label { font-size: 10px; color: var(--dim); letter-spacing: .1em; margin-bottom: 5px; }
+  #progress-bar-bg { height: 4px; background: #1A2030; border-radius: 2px; overflow: hidden; }
+  #progress-bar-fill { height: 100%; background: #00D4FF; border-radius: 2px; transition: width .4s; }
+  #progress-pct { font-size: 10px; color: #00D4FF; margin-top: 4px; }
+  #user-bar { display:flex; align-items:center; gap:14px; }
+  #user-name { font-size:11px; color:#405060; letter-spacing:.08em; }
+  #user-name span { color:#7A9AB0; }
+  #sync-status { font-size:10px; letter-spacing:.08em; min-width:80px; }
+  #setup-again { font-size:10px; color:#304050; cursor:pointer; text-decoration:underline; border:none; background:none; font-family:"IBM Plex Mono",monospace; }
+
+  /* ── Layout ── */
+  #layout { display: flex; flex: 1; }
+
+  /* ── Sidebar ── */
+  #sidebar {
+    width: 196px; flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    padding: 16px 0;
+    position: sticky; top: 65px;
+    height: calc(100vh - 65px);
+    overflow-y: auto;
+  }
+
+  .nav-btn {
+    display: block; width: 100%;
+    background: transparent; border: none;
+    border-left: 3px solid transparent;
+    padding: 10px 14px;
+    text-align: left; cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    transition: all .15s;
+  }
+  .nav-btn:hover { border-left-color: #2A3A4A; }
+  .nav-btn.active { border-left-color: var(--phase-color, #00D4FF); background: rgba(0,0,0,.3); }
+  .nav-label { font-size: 9px; letter-spacing: .15em; color: var(--dim); margin-bottom: 2px; }
+  .nav-title { font-size: 12px; color: var(--text); font-weight: 700; }
+  .nav-dur { font-size: 9px; color: var(--dim); margin-top: 2px; }
+  .nav-btn.active .nav-title { color: var(--phase-color, #00D4FF); }
+  .nav-btn.active .nav-label { color: var(--phase-color, #00D4FF); }
+  .nav-divider { border-top: 1px solid var(--border); margin: 10px 0; }
+
+  /* ── Main ── */
+  #main { flex: 1; padding: 28px 32px; overflow-y: auto; max-width: 900px; }
+
+  /* ── Phase header ── */
+  .phase-num { font-family: 'Bebas Neue', sans-serif; font-size: 80px; opacity: .05; position: absolute; right: 0; top: -10px; letter-spacing: .05em; pointer-events: none; }
+  .phase-header { position: relative; margin-bottom: 20px; }
+  .phase-eyebrow { font-size: 10px; letter-spacing: .2em; font-weight: 700; margin-bottom: 6px; }
+  .phase-title { font-family: 'Bebas Neue', sans-serif; font-size: 34px; letter-spacing: .1em; color: #fff; margin-bottom: 10px; }
+  .phase-goal { font-size: 12px; color: #8AA0B0; line-height: 1.75; max-width: 680px; }
+
+  /* ── Warning box ── */
+  .warn {
+    border-left: 3px solid #FF4444;
+    background: #120808;
+    padding: 11px 14px;
+    border-radius: 0 2px 2px 0;
+    margin-bottom: 18px;
+    font-size: 11px; color: #FF9090; line-height: 1.65;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    margin-bottom: 12px;
+  }
+  .card-head {
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid transparent;
+    transition: border-color .15s;
+    user-select: none;
+  }
+  .card-head:hover { border-bottom-color: var(--border); }
+  .card-body { padding: 0 16px 14px; display: none; }
+  .card-body.open { display: block; }
+  .card-toggle { margin-left: auto; color: var(--dim); font-size: 16px; flex-shrink: 0; }
+
+  /* ── Check items ── */
+  .check-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 9px 16px;
+    border-bottom: 1px solid #0E1318;
+    cursor: pointer; transition: opacity .15s;
+  }
+  .check-row:last-child { border-bottom: none; }
+  .check-row:hover { opacity: .85; }
+  .checkbox {
+    width: 14px; height: 14px;
+    border: 1px solid #2A3A4A;
+    border-radius: 1px; flex-shrink: 0; margin-top: 2px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; transition: all .15s; color: #000;
+  }
+  .check-label { font-size: 12px; color: var(--text); line-height: 1.55; flex: 1; }
+  .check-row.done .check-label { color: #2A3A4A; text-decoration: line-through; }
+
+  /* ── Notes panel ── */
+  .notes-panel {
+    background: #070A0D;
+    border-top: 1px solid #0E1318;
+    padding: 12px 16px;
+    font-size: 11px; color: #4A8A60;
+    line-height: 1.75;
+    display: none;
+  }
+  .notes-panel.open { display: block; }
+  .notes-panel pre {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px; color: #5A9A70;
+    line-height: 1.75; white-space: pre-wrap;
+    margin-top: 6px;
+  }
+
+  /* ── Tags ── */
+  .tag {
+    display: inline-block; font-size: 9px; font-weight: 700;
+    letter-spacing: .15em; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 1px;
+  }
+
+  /* ── Section headers ── */
+  .section-head {
+    font-size: 10px; font-weight: 700;
+    letter-spacing: .15em; text-transform: uppercase;
+    margin: 20px 0 8px; color: var(--dim);
+  }
+
+  /* ── Approach box ── */
+  .approach {
+    border-left: 3px solid var(--phase-color, #00D4FF);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--phase-color, #00D4FF);
+    padding: 12px 16px;
+    border-radius: 0 2px 2px 0;
+    font-size: 12px; color: #8090A0; line-height: 1.7;
+    margin-bottom: 18px;
+  }
+
+  /* ── Lang tabs ── */
+  .lang-tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+  .lang-tab {
+    padding: 8px 22px;
+    background: transparent;
+    border: 1px solid var(--border);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px; font-weight: 700; letter-spacing: .1em;
+    cursor: pointer; border-radius: 2px; transition: all .15s;
+    color: var(--muted);
+  }
+  .lang-tab.active { color: #000; }
+
+  /* ── Schedule grid ── */
+  .sched-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-bottom: 24px; }
+  .sched-card { background: var(--surface); border: 1px solid var(--border); border-radius: 2px; padding: 12px; }
+  .sched-day { font-size: 10px; font-weight: 700; color: #7A8FA0; letter-spacing: .12em; margin-bottom: 8px; }
+  .sched-slot { font-size: 11px; color: var(--muted); line-height: 1.6; padding: 5px 0; border-bottom: 1px solid #0E1318; }
+  .sched-slot:last-child { border-bottom: none; }
+
+  /* ── Truth list ── */
+  .truth-row { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .truth-num { color: #00D4FF; font-size: 12px; flex-shrink: 0; }
+  .truth-text { font-size: 12px; color: #8090A0; line-height: 1.75; }
+
+  /* ── GitHub banner ── */
+  #gh-banner {
+    background: #0D1A14; border: 1px solid #1A3A28;
+    padding: 14px 18px; border-radius: 2px; margin-bottom: 20px;
+    font-size: 11px; color: #4A9A70; line-height: 1.75;
+  }
+  #gh-banner strong { color: #6ADA90; }
+  #gh-banner code { background: #0A150F; padding: 1px 6px; border-radius: 2px; font-size: 10px; color: #5ABA80; }
+
+  /* ── Two-column ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } #sidebar { display: none; } #main { padding: 16px; } }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div>
+    <div id="header-title">MICROSOFT INTERNSHIP PREP</div>
+    <div id="header-sub">16-WEEK INTENSIVE · TARGET: Microsoft Kenya · Applications: November</div>
+  </div>
+  <div id="progress-bar-wrap">
+    <div id="progress-label">OVERALL PROGRESS</div>
+    <div id="progress-bar-bg"><div id="progress-bar-fill" style="width:0%"></div></div>
+    <div id="progress-pct">0 / 0 items completed</div>
+  </div>
+  <div id="user-bar">
+    <div id="user-name">user: <span id="user-name-val">—</span></div>
+    <div id="sync-status"></div>
+    <button id="setup-again" onclick="showSetupModal(() => renderApp())">change account</button>
+  </div>
+</div>
+
+<div id="layout">
+  <nav id="sidebar"></nav>
+  <main id="main"></main>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════════════════
+const PHASES = [
+  // ── PHASE 0: LANGUAGE FOUNDATIONS ──────────────────────
+  {
+    id: 0, label: "PHASE 01", title: "Language Foundations",
+    duration: "Weeks 1–3", color: "#FF6B35",
+    goal: "Learn Python and C# from scratch — syntax, data structures, and how to write code properly. You cannot do DSA without a language. These 3 weeks are your launchpad.",
+    warning: "Do not skip or rush this phase thinking 'I'll pick it up as I go'. If your language is shaky, you will freeze in interviews. Build a solid base here, everything else depends on it.",
+    approach: "Pick Python as your primary language — it's faster to write in interviews and almost universally accepted. Learn C# in parallel but less intensively. By end of Week 3 you should be able to write any basic program in Python without googling syntax.",
+    tabs: ["Python", "C#"],
+    content: {
+      Python: [
+        {
+          section: "Week 1 — Absolute Basics",
+          items: [
+            {
+              label: "Variables, types, print()",
+              note: "Python is dynamically typed — no need to declare types.\n\nx = 10          # int\nname = 'Moses'  # string\nprice = 3.14    # float\nis_ok = True    # bool\nprint(x, name)  # prints: 10 Moses\n\nTo check the type: print(type(x))  →  <class 'int'>"
+            },
+            {
+              label: "if / elif / else — conditional logic",
+              note: "Python uses indentation (4 spaces) instead of curly braces.\n\nx = 15\nif x > 20:\n    print('big')\nelif x > 10:\n    print('medium')   # this prints\nelse:\n    print('small')\n\nImportant: no parentheses needed around the condition."
+            },
+            {
+              label: "for loops and while loops",
+              note: "# for loop over a range\nfor i in range(5):      # 0, 1, 2, 3, 4\n    print(i)\n\n# for loop over a list\nfruits = ['apple', 'mango', 'banana']\nfor fruit in fruits:\n    print(fruit)\n\n# while loop\nn = 0\nwhile n < 5:\n    print(n)\n    n += 1\n\nrange(start, stop, step): range(2, 10, 2) → 2,4,6,8"
+            },
+            {
+              label: "Functions — def, parameters, return",
+              note: "def add(a, b):\n    return a + b\n\nresult = add(3, 4)   # result = 7\nprint(result)\n\n# Default parameters\ndef greet(name='stranger'):\n    return f'Hello, {name}!'\n\nprint(greet('Moses'))   # Hello, Moses!\nprint(greet())          # Hello, stranger!\n\nf-strings (f'...') let you embed variables directly in strings."
+            },
+            {
+              label: "Strings — indexing, slicing, methods",
+              note: "s = 'hello'\nprint(s[0])       # 'h'  — indexing starts at 0\nprint(s[-1])      # 'o'  — negative = from end\nprint(s[1:4])     # 'ell' — slice [start:end] exclusive\nprint(s[:3])      # 'hel'\nprint(len(s))     # 5\n\n# Useful methods\nprint(s.upper())       # 'HELLO'\nprint(s.replace('l','r'))  # 'herro'\nprint('ell' in s)      # True\nprint(s.split('l'))    # ['he', '', 'o']\n\nStrings are immutable — you cannot do s[0] = 'H'."
+            },
+            {
+              label: "Lists — the most important structure in Python",
+              note: "arr = [3, 1, 4, 1, 5]\narr.append(9)      # add to end:  [3,1,4,1,5,9]\narr.pop()          # remove last: [3,1,4,1,5]\narr.pop(0)         # remove first: [1,4,1,5]\narr.insert(0, 99)  # insert at index 0\nprint(arr[2])      # access by index: 1\nprint(len(arr))    # length\n\n# Sorting\narr.sort()              # sorts in place\nsorted_copy = sorted(arr)  # returns new sorted list\n\n# 2D list (grid)\ngrid = [[0,1],[2,3]]\nprint(grid[1][0])   # 2\n\nDSA note: lists are your arrays. Also your stack (append+pop)."
+            },
+          ]
+        },
+        {
+          section: "Week 1 — Intermediate Syntax",
+          items: [
+            {
+              label: "Dictionaries (dict) — key-value storage",
+              note: "d = {}                    # empty dict\nd['name'] = 'Moses'       # set\nd['age'] = 21\nprint(d['name'])          # get: 'Moses'\nprint('age' in d)         # True — check key exists\nprint(d.get('score', 0))  # safe get, returns 0 if missing\n\n# Loop over dict\nfor key, val in d.items():\n    print(key, '->', val)\n\n# Common DSA use: frequency count\nfreq = {}\nfor ch in 'hello':\n    freq[ch] = freq.get(ch, 0) + 1\n# freq = {'h':1, 'e':1, 'l':2, 'o':1}"
+            },
+            {
+              label: "Sets — unique, unordered, O(1) lookup",
+              note: "s = set()\ns.add(3)\ns.add(5)\ns.add(3)      # duplicate ignored\nprint(s)      # {3, 5}\nprint(3 in s) # True  — O(1), much faster than 'in list'\ns.discard(3)  # remove (no error if missing)\n\n# Create from list (removes duplicates)\nunique = set([1,2,2,3,3])\nprint(unique)  # {1, 2, 3}\n\nDSA note: use sets as 'visited' in graph traversal."
+            },
+            {
+              label: "Tuples — immutable pairs/triples",
+              note: "t = (3, 5)          # create\nx, y = t            # unpack\nprint(x, y)         # 3 5\n\n# Swap two variables without a temp!\na, b = 5, 10\na, b = b, a         # a=10, b=5\n\n# Return multiple values from a function\ndef min_max(arr):\n    return min(arr), max(arr)\n\nlo, hi = min_max([3,1,5])\n\nDSA note: tuples in heaps — (cost, node) for Dijkstra."
+            },
+            {
+              label: "List comprehensions — one-line list building",
+              note: "# Instead of:\nresult = []\nfor i in range(5):\n    result.append(i * 2)\n\n# Write:\nresult = [i * 2 for i in range(5)]   # [0,2,4,6,8]\n\n# With condition:\nevens = [x for x in range(10) if x % 2 == 0]\n# [0, 2, 4, 6, 8]\n\n# 2D grid of zeros:\ngrid = [[0] * 3 for _ in range(3)]\n# [[0,0,0],[0,0,0],[0,0,0]]\n\nDSA note: building adjacency lists, transforming arrays."
+            },
+            {
+              label: "enumerate() and zip()",
+              note: "# enumerate — get index + value\nfor i, val in enumerate(['a','b','c']):\n    print(i, val)    # 0 a, 1 b, 2 c\n\n# zip — pair two lists\nnames  = ['Alice', 'Bob']\nscores = [95, 87]\nfor name, score in zip(names, scores):\n    print(name, score)   # Alice 95, Bob 87\n\nDSA note: zip is useful for two-pointer setups where you\nneed to process two arrays side by side."
+            },
+            {
+              label: "Lambda and sorted() with custom key",
+              note: "# Lambda = tiny anonymous function\ndouble = lambda x: x * 2\nprint(double(5))   # 10\n\n# sorted() with key\npairs = [(1, 3), (2, 1), (0, 2)]\nsorted_by_second = sorted(pairs, key=lambda p: p[1])\n# [(2,1), (0,2), (1,3)]\n\n# Sort descending\nsorted_desc = sorted(pairs, key=lambda p: p[1], reverse=True)\n\nDSA note: essential for interval problems, greedy sorting."
+            },
+          ]
+        },
+        {
+          section: "Week 2 — DSA-Critical Built-ins",
+          items: [
+            {
+              label: "collections.deque — double-ended queue",
+              note: "from collections import deque\n\nq = deque()\nq.append(1)       # add right\nq.append(2)\nq.appendleft(0)   # add left\nprint(q)          # deque([0, 1, 2])\nq.popleft()       # remove left: O(1) ✓\nq.pop()           # remove right: O(1) ✓\n\n# Why not just use a list?\n# list.pop(0) is O(n) — shifts all elements.\n# deque.popleft() is O(1). Always use deque for BFS."
+            },
+            {
+              label: "collections.defaultdict — dict with a default value",
+              note: "from collections import defaultdict\n\n# defaultdict(int) — missing key returns 0\nfreq = defaultdict(int)\nfor ch in 'hello':\n    freq[ch] += 1      # no KeyError!\n\n# defaultdict(list) — missing key returns []\ngraph = defaultdict(list)\ngraph['A'].append('B')\ngraph['A'].append('C')\n# graph = {'A': ['B', 'C']}\n\nDSA note: this is how you build adjacency lists for graphs."
+            },
+            {
+              label: "collections.Counter — instant frequency map",
+              note: "from collections import Counter\n\nc = Counter('aabbbcc')\nprint(c)              # Counter({'b': 3, 'a': 2, 'c': 2})\nprint(c['b'])         # 3\nprint(c.most_common(2))  # [('b',3), ('a',2)]\n\nc2 = Counter([1, 1, 2, 3, 2, 1])\nprint(c2)             # Counter({1:3, 2:2, 3:1})\n\nDSA note: anagram checks, sliding window freq maps."
+            },
+            {
+              label: "heapq — min-heap (priority queue)",
+              note: "import heapq\n\nh = []\nheapq.heappush(h, 5)\nheapq.heappush(h, 2)\nheapq.heappush(h, 8)\nprint(heapq.heappop(h))   # 2 — always pops minimum\n\n# Build heap from existing list\narr = [3, 1, 4, 1, 5]\nheapq.heapify(arr)   # in-place, O(n)\n\n# MAX-HEAP trick — negate values\nheapq.heappush(h, -10)   # push negative\nval = -heapq.heappop(h)  # negate on pop → 10\n\nDSA note: Dijkstra's, K largest/smallest, merge K lists."
+            },
+            {
+              label: "float('inf') and float('-inf')",
+              note: "# Infinity — for initialising min/max\nmin_val = float('inf')\nmax_val = float('-inf')\n\nfor x in [3, 1, 5, 2]:\n    if x < min_val: min_val = x\n    if x > max_val: max_val = x\n\n# Also useful as 'unreachable' distance in graphs\ndist = {node: float('inf') for node in graph}\ndist[start] = 0\n\nDSA note: appears in almost every graph / DP problem."
+            },
+            {
+              label: "Recursion — how it works, base case, stack",
+              note: "# Every recursive function needs:\n# 1. A base case (where it stops)\n# 2. A recursive call that moves toward the base case\n\ndef factorial(n):\n    if n <= 1: return 1        # base case\n    return n * factorial(n-1)  # recursive call\n\nprint(factorial(5))  # 120\n\n# Each call adds a frame to the call stack.\n# Python's default recursion limit is 1000.\n# For deep recursion: import sys; sys.setrecursionlimit(10000)\n\nDSA note: trees and graphs are almost always solved with recursion."
+            },
+          ]
+        },
+        {
+          section: "Week 3 — Patterns to Write From Memory",
+          items: [
+            {
+              label: "BFS template (Breadth-First Search)",
+              note: "from collections import deque\n\ndef bfs(graph, start):\n    visited = set([start])\n    q = deque([start])\n    while q:\n        node = q.popleft()\n        print(node)  # process node\n        for neighbour in graph[node]:\n            if neighbour not in visited:\n                visited.add(neighbour)\n                q.append(neighbour)\n\n# BFS finds SHORTEST PATH in unweighted graphs.\n# Use it when: shortest path, level-by-level traversal."
+            },
+            {
+              label: "DFS template (Depth-First Search)",
+              note: "def dfs(graph, node, visited=None):\n    if visited is None: visited = set()\n    visited.add(node)\n    print(node)  # process node\n    for neighbour in graph[node]:\n        if neighbour not in visited:\n            dfs(graph, neighbour, visited)\n\n# DFS goes DEEP before backtracking.\n# Use it when: connected components, cycle detection,\n# topological sort, path existence."
+            },
+            {
+              label: "Two Pointer template",
+              note: "def two_sum_sorted(arr, target):\n    l, r = 0, len(arr) - 1\n    while l < r:\n        s = arr[l] + arr[r]\n        if s == target:\n            return [l, r]\n        elif s < target:\n            l += 1   # need bigger sum\n        else:\n            r -= 1   # need smaller sum\n    return []\n\n# Use when: sorted array, pair problems,\n# Reverse String, Valid Palindrome."
+            },
+            {
+              label: "Sliding Window template",
+              note: "def longest_no_repeat(s):\n    seen = set()\n    l = 0\n    best = 0\n    for r in range(len(s)):\n        # Shrink window until valid\n        while s[r] in seen:\n            seen.remove(s[l])\n            l += 1\n        seen.add(s[r])\n        best = max(best, r - l + 1)\n    return best\n\n# Window = s[l..r]. Expand r, shrink l when invalid.\n# Use for: substrings, subarrays with constraints."
+            },
+            {
+              label: "Backtracking template",
+              note: "def subsets(nums):\n    result = []\n    def backtrack(start, path):\n        result.append(path[:])  # snapshot current path\n        for i in range(start, len(nums)):\n            path.append(nums[i])    # choose\n            backtrack(i + 1, path)  # explore\n            path.pop()              # un-choose\n    backtrack(0, [])\n    return result\n\n# The pattern: choose → explore → un-choose\n# Use for: subsets, permutations, combinations, N-Queens."
+            },
+            {
+              label: "Binary Search template",
+              note: "def binary_search(arr, target):\n    l, r = 0, len(arr) - 1\n    while l <= r:\n        mid = (l + r) // 2   # integer division\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            l = mid + 1\n        else:\n            r = mid - 1\n    return -1  # not found\n\n# O(log n) — halves the search space each step.\n# Prerequisite: array must be SORTED."
+            },
+          ]
+        },
+        {
+          section: "Python Gotchas — These Will Burn You in Interviews",
+          items: [
+            { label: "path[:] vs path — list copy vs reference", note: "result.append(path) stores a REFERENCE to path.\nWhen path changes later, so does what you stored!\n\n# WRONG:\nresult.append(path)   # all entries will look the same\n\n# CORRECT:\nresult.append(path[:])     # shallow copy\nresult.append(list(path))  # also fine\n\nThis bites almost everyone in backtracking problems." },
+            { label: "Mutable default arguments", note: "# WRONG — this is a famous Python bug:\ndef fn(visited=[]):\n    visited.append(1)\n    return visited\n\nfn()  # [1]\nfn()  # [1, 1]  ← bug! same list reused!\n\n# CORRECT:\ndef fn(visited=None):\n    if visited is None: visited = []\n    visited.append(1)\n    return visited" },
+            { label: "Integer division // vs /", note: "10 / 3   = 3.333...   # float division\n10 // 3  = 3          # floor (integer) division\n10 % 3   = 1          # modulo (remainder)\n\nIn binary search, always use //:\nmid = (l + r) // 2\n\nNot mid = (l + r) / 2 — that gives a float,\nand you can't use a float as a list index." },
+            { label: "range() is exclusive at the end", note: "range(5)      → 0, 1, 2, 3, 4   (not 5)\nrange(1, 5)   → 1, 2, 3, 4      (not 5)\nrange(0, 10, 2) → 0, 2, 4, 6, 8\n\nCommon mistake:\nfor i in range(len(arr)):      # correct\nfor i in range(len(arr) + 1):  # off by one!\n\nAlso: list[-1] is the last element, not an error." },
+          ]
+        },
+      ],
+      "C#": [
+        {
+          section: "Week 1 — C# Basics (Microsoft's Language)",
+          items: [
+            {
+              label: "Variables and types — C# is statically typed",
+              note: "// C# requires you to declare the type\nint age = 21;\nstring name = \"Moses\";\ndouble price = 3.14;\nbool isReady = true;\n\n// Or use 'var' — compiler infers the type\nvar x = 42;        // int\nvar s = \"hello\";   // string\n\n// Print to console\nConsole.WriteLine(\"Hello \" + name);\nConsole.WriteLine($\"Age: {age}\");  // string interpolation\n\n// Unlike Python, you CANNOT change the type after declaration."
+            },
+            {
+              label: "if / else if / else",
+              note: "int score = 75;\n\nif (score >= 90) {\n    Console.WriteLine(\"A\");\n} else if (score >= 70) {\n    Console.WriteLine(\"B\");   // this prints\n} else {\n    Console.WriteLine(\"C\");\n}\n\n// Note the curly braces {} — required (unlike Python's indentation)\n// Condition must be in parentheses ()"
+            },
+            {
+              label: "for loops and while loops",
+              note: "// Classic for loop\nfor (int i = 0; i < 5; i++) {\n    Console.WriteLine(i);   // 0,1,2,3,4\n}\n\n// foreach — cleaner for collections\nint[] nums = {1, 2, 3, 4};\nforeach (int n in nums) {\n    Console.WriteLine(n);\n}\n\n// while loop\nint n = 0;\nwhile (n < 5) {\n    Console.WriteLine(n);\n    n++;\n}"
+            },
+            {
+              label: "Methods (functions in C#)",
+              note: "// returnType MethodName(paramType param)\nint Add(int a, int b) {\n    return a + b;\n}\n\nConsole.WriteLine(Add(3, 4));  // 7\n\n// void = returns nothing\nvoid Greet(string name) {\n    Console.WriteLine($\"Hello, {name}!\");\n}\n\n// In LeetCode/interviews, methods are inside a class:\npublic class Solution {\n    public int TwoSum(...) { ... }\n}"
+            },
+            {
+              label: "Arrays and List<T>",
+              note: "// Fixed-size array\nint[] arr = new int[5];       // [0,0,0,0,0]\nint[] arr2 = {3, 1, 4, 1, 5};\nConsole.WriteLine(arr2[0]);   // 3\nConsole.WriteLine(arr2.Length);\n\n// Dynamic list (like Python list)\nList<int> list = new List<int>();\nlist.Add(10);    list.Add(20);\nlist.Remove(10);\nConsole.WriteLine(list.Count);  // use Count, not Length\n\n// Sort\nArray.Sort(arr2);              // sorts array in place\nlist.Sort();                   // sorts list in place\n\nDSA note: use int[] when size is fixed, List<T> when dynamic."
+            },
+            {
+              label: "Strings in C#",
+              note: "string s = \"hello\";\nConsole.WriteLine(s.Length);        // 5\nConsole.WriteLine(s[0]);            // 'h' (char)\nConsole.WriteLine(s.ToUpper());     // \"HELLO\"\nConsole.WriteLine(s.Contains(\"ell\")); // true\nConsole.WriteLine(s.Substring(1, 3)); // \"ell\"\nConsole.WriteLine(s.Replace(\"l\", \"r\")); // \"herro\"\n\n// String concatenation in loops — DON'T use +=\n// Use StringBuilder for performance:\nvar sb = new System.Text.StringBuilder();\nfor (int i = 0; i < 5; i++) sb.Append(i);\nstring result = sb.ToString();  // \"01234\"\n\nDSA note: StringBuilder is O(n), string += in loop is O(n²)."
+            },
+          ]
+        },
+        {
+          section: "Week 2 — C# Data Structures for DSA",
+          items: [
+            {
+              label: "Dictionary<K,V> — key-value map",
+              note: "var dict = new Dictionary<string, int>();\ndict[\"a\"] = 1;\ndict[\"b\"] = 2;\n\n// Safe access\nif (dict.ContainsKey(\"a\")) Console.WriteLine(dict[\"a\"]);\n\n// GetValueOrDefault — returns default if key missing\nint freq = dict.GetValueOrDefault(\"c\", 0);  // 0\n\n// Frequency count pattern:\nvar freq2 = new Dictionary<char, int>();\nforeach (char c in \"hello\") {\n    freq2[c] = freq2.GetValueOrDefault(c, 0) + 1;\n}\n\n// Loop\nforeach (var kvp in dict)\n    Console.WriteLine($\"{kvp.Key}: {kvp.Value}\");"
+            },
+            {
+              label: "HashSet<T> — unique elements, O(1) lookup",
+              note: "var seen = new HashSet<int>();\nseen.Add(5);   seen.Add(3);  seen.Add(5);  // dup ignored\nConsole.WriteLine(seen.Contains(5));  // true\nConsole.WriteLine(seen.Count);        // 2\nseen.Remove(3);\n\n// Check visited in BFS/DFS:\nvar visited = new HashSet<int>();\nvisited.Add(startNode);\n// ...\nif (!visited.Contains(node)) { ... }\n\nDSA note: exact equivalent of Python's set()."
+            },
+            {
+              label: "Queue<T> — FIFO queue for BFS",
+              note: "var q = new Queue<int>();\nq.Enqueue(1);   // add to back\nq.Enqueue(2);\nq.Enqueue(3);\nConsole.WriteLine(q.Dequeue());  // 1 — remove from front\nConsole.WriteLine(q.Peek());     // 2 — look without removing\nConsole.WriteLine(q.Count);      // 2\n\n// BFS skeleton:\nvar bfsQ = new Queue<int>();\nbfsQ.Enqueue(start);\nwhile (bfsQ.Count > 0) {\n    int node = bfsQ.Dequeue();\n    // process node, enqueue neighbours\n}"
+            },
+            {
+              label: "Stack<T> — LIFO stack",
+              note: "var stack = new Stack<int>();\nstack.Push(1);\nstack.Push(2);\nstack.Push(3);\nConsole.WriteLine(stack.Pop());   // 3 — last in, first out\nConsole.WriteLine(stack.Peek());  // 2 — look without removing\nConsole.WriteLine(stack.Count);   // 2\n\nDSA uses:\n- Iterative DFS\n- Monotonic stack (Daily Temperatures)\n- Valid Parentheses\n- Backtracking iteratively"
+            },
+            {
+              label: "PriorityQueue<TElement, TPriority> — min-heap (.NET 6+)",
+              note: "// Min-heap — lowest priority number dequeues first\nvar pq = new PriorityQueue<string, int>();\npq.Enqueue(\"low\", 10);\npq.Enqueue(\"high\", 1);\npq.Enqueue(\"mid\", 5);\n\nConsole.WriteLine(pq.Dequeue());  // \"high\" (priority 1)\n\n// Dijkstra skeleton:\nvar dijkQ = new PriorityQueue<int, int>(); // (node, cost)\ndijkQ.Enqueue(start, 0);\nwhile (dijkQ.Count > 0) {\n    dijkQ.TryDequeue(out int node, out int cost);\n    // process\n}"
+            },
+            {
+              label: "Tuple and returning multiple values",
+              note: "// Return multiple values\n(int, int) MinMax(int[] arr) {\n    return (arr.Min(), arr.Max());\n}\n\nvar (lo, hi) = MinMax(new int[]{3,1,5,2});\nConsole.WriteLine($\"{lo} {hi}\");  // 1 5\n\n// Tuple in collections (e.g., graph edges with cost)\nvar edges = new List<(int from, int to, int cost)>();\nedges.Add((0, 1, 5));\nforeach (var (from, to, cost) in edges)\n    Console.WriteLine($\"{from}->{to}: {cost}\");"
+            },
+          ]
+        },
+        {
+          section: "Week 3 — C# Patterns to Write From Memory",
+          items: [
+            {
+              label: "BFS template in C#",
+              note: "void BFS(Dictionary<int, List<int>> graph, int start) {\n    var visited = new HashSet<int> { start };\n    var q = new Queue<int>();\n    q.Enqueue(start);\n\n    while (q.Count > 0) {\n        int node = q.Dequeue();\n        Console.WriteLine(node);  // process\n        foreach (int nb in graph[node]) {\n            if (!visited.Contains(nb)) {\n                visited.Add(nb);\n                q.Enqueue(nb);\n            }\n        }\n    }\n}"
+            },
+            {
+              label: "DFS template in C#",
+              note: "void DFS(Dictionary<int, List<int>> graph,\n         int node, HashSet<int> visited) {\n    visited.Add(node);\n    Console.WriteLine(node);  // process\n    foreach (int nb in graph[node]) {\n        if (!visited.Contains(nb))\n            DFS(graph, nb, visited);\n    }\n}\n\n// Call:\nvar visited = new HashSet<int>();\nDFS(graph, startNode, visited);"
+            },
+            {
+              label: "Binary search in C#",
+              note: "int BinarySearch(int[] arr, int target) {\n    int l = 0, r = arr.Length - 1;\n    while (l <= r) {\n        int mid = l + (r - l) / 2;  // avoids overflow vs (l+r)/2\n        if (arr[mid] == target) return mid;\n        else if (arr[mid] < target) l = mid + 1;\n        else r = mid - 1;\n    }\n    return -1;\n}\n\nNote: l + (r - l) / 2 is safer than (l + r) / 2\nbecause (l + r) can overflow int max (~2.1 billion)."
+            },
+            {
+              label: "Two pointer in C#",
+              note: "bool HasPairSum(int[] arr, int target) {\n    int l = 0, r = arr.Length - 1;\n    while (l < r) {\n        int sum = arr[l] + arr[r];\n        if (sum == target) return true;\n        else if (sum < target) l++;\n        else r--;\n    }\n    return false;\n}\n\n// Array must be sorted first if not already."
+            },
+          ]
+        },
+        {
+          section: "C# Gotchas — Common Interview Mistakes",
+          items: [
+            { label: "Integer overflow — use long for big sums", note: "int max = 2_147_483_647;  // ~2.1 billion\n// Adding two large ints can silently overflow!\n\n// WRONG (if arr values are large):\nint sum = 0;\nfor (int x : arr) sum += x;  // overflow!\n\n// CORRECT:\nlong sum = 0L;\nforeach (int x in arr) sum += x;\n\nAlso: in binary search, prefer l + (r - l) / 2\nover (l + r) / 2 to avoid overflow." },
+            { label: "dict[key] throws if key not found", note: "// WRONG — throws KeyNotFoundException:\nint count = dict[\"x\"];\n\n// CORRECT options:\n// 1. Check first:\nif (dict.ContainsKey(\"x\")) count = dict[\"x\"];\n\n// 2. Use GetValueOrDefault:\ncount = dict.GetValueOrDefault(\"x\", 0);\n\n// 3. TryGetValue:\nif (dict.TryGetValue(\"x\", out int val)) {\n    count = val;\n}" },
+            { label: "Strings are immutable — use StringBuilder in loops", note: "// WRONG — O(n²) because each += creates a new string:\nstring result = \"\";\nfor (int i = 0; i < n; i++) result += arr[i];\n\n// CORRECT — O(n):\nvar sb = new StringBuilder();\nfor (int i = 0; i < n; i++) sb.Append(arr[i]);\nstring result = sb.ToString();\n\nInterviewers notice this. It shows you understand\ntime complexity beyond just the algorithm." },
+            { label: "List.Count vs Array.Length", note: "int[] arr = {1, 2, 3};\nConsole.WriteLine(arr.Length);  // 3 ✓\n// arr.Count doesn't exist for arrays!\n\nList<int> list = new List<int> {1, 2, 3};\nConsole.WriteLine(list.Count);  // 3 ✓\n// list.Length doesn't exist for List!\n\nMemory trick: Array = Length, List = Count.\nMixing these up in interviews is a red flag." },
+          ]
+        },
+      ]
+    }
+  },
+
+  // ── PHASE 1: DSA ──────────────────────────────────────
+  {
+    id: 1, label: "PHASE 02", title: "DSA Foundations",
+    duration: "Weeks 3–10", color: "#00D4FF",
+    goal: "Go from zero to solving LeetCode mediums consistently. Every problem here is solved in Python first, then re-solved in C#. The language becomes muscle memory through repetition.",
+    warning: "Microsoft's online assessment is pure DSA. Two questions, 75 minutes. If you can't solve mediums consistently, you don't get an interview. This phase is the gate.",
+    approach: "2 problems/day minimum. Timer yourself — 25 min per problem max. If stuck, read the approach only (NOT the code), then solve it yourself. Quality over quantity.",
+    resource: "NeetCode 150 + Striver's DSA Sheet",
+    topics: [
+      {
+        name: "Arrays & Strings", weeks: "Wk 3–4",
+        concepts: [
+          { label: "Two Pointers", note: "Two pointers = two indices moving toward each other (or in same direction).\n\nWhen to use: sorted array, palindrome check, pair sum.\n\nTemplate:\nl, r = 0, len(arr)-1\nwhile l < r:\n    if condition_met: return result\n    elif need_bigger: l += 1\n    else: r -= 1\n\nKey insight: by moving l right, you increase the sum.\nBy moving r left, you decrease it.\nThis lets you search in O(n) instead of O(n²)." },
+          { label: "Sliding Window", note: "Sliding window = subarray/substring of variable or fixed size.\n\nWhen to use: 'longest/shortest subarray with property X'\n\nVariable window template:\nl = 0\nfor r in range(len(arr)):\n    # add arr[r] to window\n    while window_is_invalid:\n        # remove arr[l] from window\n        l += 1\n    # update best answer\n\nFixed window (size k):\nfor r in range(len(arr)):\n    if r >= k: remove arr[r-k] from window\n    # update answer" },
+          { label: "Prefix Sums", note: "Prefix sum = precomputed cumulative sums for O(1) range queries.\n\nprefix[i] = arr[0] + arr[1] + ... + arr[i]\n\nBuild:\nprefix = [0] * (n+1)\nfor i in range(n):\n    prefix[i+1] = prefix[i] + arr[i]\n\nRange sum query arr[l..r]:\nsum = prefix[r+1] - prefix[l]\n\nThis turns O(n) per query into O(1) after O(n) setup.\nUsed in: subarray sum equals k, range queries." },
+          { label: "Kadane's Algorithm", note: "Kadane's = maximum subarray sum in O(n).\n\ncur = arr[0]\nbest = arr[0]\nfor i in range(1, len(arr)):\n    cur = max(arr[i], cur + arr[i])\n    best = max(best, cur)\nreturn best\n\nIntuition: at each element, decide — is it better to\nstart fresh (just arr[i]) or extend the previous subarray\n(cur + arr[i])? Take the max.\n\nKey: cur represents the max subarray ending at index i." },
+        ],
+        leetcode: [
+          { name: "Two Sum", link: "https://leetcode.com/problems/two-sum/", note: "Difficulty: Easy | Pattern: Hash Map\n\nApproach: For each number x, check if (target - x) is in a dict.\nIf yes → found the pair. If no → store x in dict.\n\nTime: O(n)   Space: O(n)\n\nPython:\ndef twoSum(nums, target):\n    seen = {}  # val → index\n    for i, x in enumerate(nums):\n        comp = target - x\n        if comp in seen:\n            return [seen[comp], i]\n        seen[x] = i" },
+          { name: "Longest Substring Without Repeating Characters", link: "https://leetcode.com/problems/longest-substring-without-repeating-characters/", note: "Difficulty: Medium | Pattern: Sliding Window\n\nApproach: Maintain a set of chars in current window.\nExpand r, when s[r] is already in set, shrink from l.\n\nTime: O(n)   Space: O(min(n, charset))\n\nPython:\ndef lengthOfLongestSubstring(s):\n    seen = set()\n    l = best = 0\n    for r in range(len(s)):\n        while s[r] in seen:\n            seen.remove(s[l]); l += 1\n        seen.add(s[r])\n        best = max(best, r - l + 1)\n    return best" },
+          { name: "Maximum Subarray", link: "https://leetcode.com/problems/maximum-subarray/", note: "Difficulty: Medium | Pattern: Kadane's Algorithm\n\nApproach: Track running max subarray sum.\nAt each index, decide: extend previous, or start fresh.\n\nTime: O(n)   Space: O(1)\n\nPython:\ndef maxSubArray(nums):\n    cur = best = nums[0]\n    for x in nums[1:]:\n        cur = max(x, cur + x)\n        best = max(best, cur)\n    return best" },
+          { name: "Product of Array Except Self", link: "https://leetcode.com/problems/product-of-array-except-self/", note: "Difficulty: Medium | Pattern: Prefix/Suffix Product\n\nApproach: For each i, answer[i] = product of all elements\nto the left × product of all elements to the right.\nCompute left products forward, right products backward.\n\nTime: O(n)   Space: O(1) excluding output\n\nNo division allowed — that's the constraint." },
+        ]
+      },
+      {
+        name: "Linked Lists & Stacks/Queues", weeks: "Wk 4–5",
+        concepts: [
+          { label: "Fast/Slow Pointers (Floyd's)", note: "Two pointers at different speeds to detect cycles.\n\nCycle detection:\nslow = fast = head\nwhile fast and fast.next:\n    slow = slow.next\n    fast = fast.next.next\n    if slow == fast: return True  # cycle!\nreturn False\n\nFind middle of linked list:\nslow = fast = head\nwhile fast and fast.next:\n    slow = slow.next\n    fast = fast.next.next\n# slow is now at middle\n\nWhy it works: if there's a cycle, fast eventually laps slow." },
+          { label: "Monotonic Stack", note: "A stack that maintains elements in increasing or decreasing order.\n\nMonotonic increasing stack (keeps increasing from bottom to top):\nstack = []\nfor x in arr:\n    while stack and stack[-1] > x:\n        popped = stack.pop()\n        # popped's 'next smaller' element is x\n    stack.append(x)\n\nUse for:\n- Next Greater Element\n- Daily Temperatures\n- Largest Rectangle in Histogram\n\nKey: when you pop, you've found the answer for the popped element." },
+          { label: "LRU Cache pattern", note: "LRU Cache = Least Recently Used eviction.\nNeeds O(1) get AND put.\n\nData structure: OrderedDict (Python) or\nDoubly Linked List + Hash Map.\n\nfrom collections import OrderedDict\nclass LRUCache:\n    def __init__(self, capacity):\n        self.cap = capacity\n        self.cache = OrderedDict()\n    def get(self, key):\n        if key not in self.cache: return -1\n        self.cache.move_to_end(key)\n        return self.cache[key]\n    def put(self, key, value):\n        if key in self.cache: self.cache.move_to_end(key)\n        self.cache[key] = value\n        if len(self.cache) > self.cap:\n            self.cache.popitem(last=False)" },
+        ],
+        leetcode: [
+          { name: "Reverse Linked List", link: "https://leetcode.com/problems/reverse-linked-list/", note: "Difficulty: Easy | Pattern: Iterative pointer reversal\n\nprev = None\ncurr = head\nwhile curr:\n    nxt = curr.next\n    curr.next = prev\n    prev = curr\n    curr = nxt\nreturn prev\n\nVisualize: you're reversing one arrow at a time.\nAlways save next before overwriting the pointer." },
+          { name: "Merge Two Sorted Lists", link: "https://leetcode.com/problems/merge-two-sorted-lists/", note: "Difficulty: Easy | Pattern: Dummy head + pointer merge\n\nUse a dummy node to avoid edge cases at the head.\ndummy = curr = ListNode(0)\nwhile l1 and l2:\n    if l1.val <= l2.val: curr.next = l1; l1 = l1.next\n    else: curr.next = l2; l2 = l2.next\n    curr = curr.next\ncurr.next = l1 or l2\nreturn dummy.next" },
+          { name: "Valid Parentheses", link: "https://leetcode.com/problems/valid-parentheses/", note: "Difficulty: Easy | Pattern: Stack\n\nFor each char in s:\n  If opening bracket → push to stack\n  If closing bracket → check stack top matches\n\nstack = []\nmatch = {')':'(', ']':'[', '}':'{'}\nfor c in s:\n    if c in '([{': stack.append(c)\n    elif not stack or stack[-1] != match[c]: return False\n    else: stack.pop()\nreturn len(stack) == 0" },
+          { name: "Daily Temperatures", link: "https://leetcode.com/problems/daily-temperatures/", note: "Difficulty: Medium | Pattern: Monotonic Decreasing Stack\n\nFor each temp, pop stack while current is warmer.\nThe popped index found its answer.\n\nstack = []  # indices\nresult = [0] * len(T)\nfor i, t in enumerate(T):\n    while stack and T[stack[-1]] < t:\n        j = stack.pop()\n        result[j] = i - j\n    stack.append(i)\nreturn result" },
+        ]
+      },
+      {
+        name: "Trees & Recursion", weeks: "Wk 5–6",
+        concepts: [
+          { label: "Tree DFS (Preorder, Inorder, Postorder)", note: "A binary tree node: val, left, right\n\nPreorder (Root → Left → Right):\ndef preorder(node):\n    if not node: return\n    visit(node)          # root first\n    preorder(node.left)\n    preorder(node.right)\n\nInorder (Left → Root → Right) — gives SORTED order for BST:\ndef inorder(node):\n    if not node: return\n    inorder(node.left)\n    visit(node)\n    inorder(node.right)\n\nPostorder (Left → Right → Root) — children before parent:\ndef postorder(node):\n    if not node: return\n    postorder(node.left)\n    postorder(node.right)\n    visit(node)" },
+          { label: "Tree BFS (Level-order traversal)", note: "Process all nodes level by level using a queue.\n\nfrom collections import deque\ndef levelOrder(root):\n    if not root: return []\n    result, q = [], deque([root])\n    while q:\n        level = []\n        for _ in range(len(q)):   # process all nodes at this level\n            node = q.popleft()\n            level.append(node.val)\n            if node.left: q.append(node.left)\n            if node.right: q.append(node.right)\n        result.append(level)\n    return result\n\nThe inner loop 'for _ in range(len(q))' is key — it isolates one level." },
+          { label: "Tree DP — thinking about subtrees", note: "Many tree problems ask: compute X for each node,\ngiven X for its children.\n\nPattern: return multiple values from recursion.\n\nExample — diameter of binary tree:\ndef diameterOfBinaryTree(root):\n    best = [0]\n    def height(node):\n        if not node: return 0\n        l = height(node.left)\n        r = height(node.right)\n        best[0] = max(best[0], l + r)  # path through this node\n        return 1 + max(l, r)            # height of this subtree\n    height(root)\n    return best[0]\n\nThe key: the recursion returns what the parent needs (height),\nwhile also computing the answer (diameter) as a side effect." },
+        ],
+        leetcode: [
+          { name: "Invert Binary Tree", link: "https://leetcode.com/problems/invert-binary-tree/", note: "Difficulty: Easy | Pattern: DFS\n\ndef invertTree(root):\n    if not root: return None\n    root.left, root.right = invertTree(root.right), invertTree(root.left)\n    return root\n\nSwap left and right children, recursively.\nBase case: null node → return None." },
+          { name: "Maximum Depth of Binary Tree", link: "https://leetcode.com/problems/maximum-depth-of-binary-tree/", note: "Difficulty: Easy | Pattern: DFS / Recursion\n\ndef maxDepth(root):\n    if not root: return 0\n    return 1 + max(maxDepth(root.left), maxDepth(root.right))\n\nIntuition: depth of a node = 1 + max depth of its subtrees.\nBase case: null has depth 0." },
+          { name: "Lowest Common Ancestor", link: "https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/", note: "Difficulty: Medium | Pattern: DFS Post-order\n\ndef lowestCommonAncestor(root, p, q):\n    if not root or root == p or root == q:\n        return root\n    left = lowestCommonAncestor(root.left, p, q)\n    right = lowestCommonAncestor(root.right, p, q)\n    if left and right: return root  # p on one side, q on other\n    return left or right\n\nIf both p and q are found in different subtrees, current node is LCA." },
+          { name: "Serialize and Deserialize Binary Tree", link: "https://leetcode.com/problems/serialize-and-deserialize-binary-tree/", note: "Difficulty: Hard | Pattern: BFS or DFS with null markers\n\nSerialize: BFS → '1,2,3,null,null,4,5'\nDeserialize: reconstruct from that string.\n\nThis is a hard but classic MS-style problem.\nFocus on getting serialize/deserialize correct.\nKey: use 'null' as a sentinel to mark missing children." },
+        ]
+      },
+      {
+        name: "Graphs", weeks: "Wk 6–7",
+        concepts: [
+          { label: "Graph representations — adjacency list", note: "Two ways to represent a graph:\n\n1. Adjacency List (most common in interviews):\ngraph = defaultdict(list)\ngraph[0].append(1)   # edge 0 → 1\ngraph[0].append(2)   # edge 0 → 2\ngraph[1].append(3)   # edge 1 → 3\n# Space: O(V + E)\n\n2. Adjacency Matrix:\ngraph = [[0]*n for _ in range(n)]\ngraph[0][1] = 1  # edge 0 → 1\n# Space: O(V²) — use for dense graphs\n\nFor most LeetCode problems, you'll either be given\nan adjacency list, an edge list, or a grid (implicit graph)." },
+          { label: "Topological Sort", note: "Topological sort = linear ordering of nodes where\nevery directed edge u→v has u before v.\nOnly valid on DAGs (Directed Acyclic Graphs).\n\nKahn's Algorithm (BFS-based):\n1. Compute in-degree of each node\n2. Start with all nodes of in-degree 0\n3. Remove them, reduce neighbours' in-degrees\n4. If any node has in-degree 0 → add to queue\n5. If result has all nodes → valid DAG, else cycle\n\nfrom collections import deque, defaultdict\ndef topoSort(n, edges):\n    graph = defaultdict(list)\n    indegree = [0] * n\n    for u, v in edges:\n        graph[u].append(v)\n        indegree[v] += 1\n    q = deque(i for i in range(n) if indegree[i] == 0)\n    order = []\n    while q:\n        node = q.popleft(); order.append(node)\n        for nb in graph[node]:\n            indegree[nb] -= 1\n            if indegree[nb] == 0: q.append(nb)\n    return order if len(order) == n else []" },
+          { label: "Union-Find (Disjoint Set Union)", note: "Union-Find: efficiently answers 'are these two nodes connected?'\n\nclass UnionFind:\n    def __init__(self, n):\n        self.parent = list(range(n))\n        self.rank = [0] * n\n    def find(self, x):\n        if self.parent[x] != x:\n            self.parent[x] = self.find(self.parent[x])  # path compression\n        return self.parent[x]\n    def union(self, x, y):\n        px, py = self.find(x), self.find(y)\n        if px == py: return False\n        if self.rank[px] < self.rank[py]: px, py = py, px\n        self.parent[py] = px\n        if self.rank[px] == self.rank[py]: self.rank[px] += 1\n        return True\n\nUsed in: Number of Connected Components, Redundant Connection." },
+        ],
+        leetcode: [
+          { name: "Number of Islands", link: "https://leetcode.com/problems/number-of-islands/", note: "Difficulty: Medium | Pattern: DFS/BFS on Grid\n\nGrid is an implicit graph. Each '1' cell is a node.\nEdges connect adjacent (up/down/left/right) cells.\n\ndef numIslands(grid):\n    count = 0\n    def dfs(r, c):\n        if r<0 or r>=len(grid) or c<0 or c>=len(grid[0]): return\n        if grid[r][c] != '1': return\n        grid[r][c] = '0'  # mark visited\n        for dr,dc in [(-1,0),(1,0),(0,-1),(0,1)]:\n            dfs(r+dr, c+dc)\n    for r in range(len(grid)):\n        for c in range(len(grid[0])):\n            if grid[r][c] == '1': dfs(r,c); count+=1\n    return count" },
+          { name: "Clone Graph", link: "https://leetcode.com/problems/clone-graph/", note: "Difficulty: Medium | Pattern: DFS + Hash Map\n\nClone each node exactly once. Use a dict to map\noriginal node → cloned node to avoid infinite loops.\n\ndef cloneGraph(node):\n    cloned = {}\n    def dfs(n):\n        if n in cloned: return cloned[n]\n        copy = Node(n.val)\n        cloned[n] = copy\n        for nb in n.neighbors:\n            copy.neighbors.append(dfs(nb))\n        return copy\n    return dfs(node) if node else None" },
+          { name: "Course Schedule", link: "https://leetcode.com/problems/course-schedule/", note: "Difficulty: Medium | Pattern: Cycle Detection / Topological Sort\n\nBuild directed graph: prerequisite → course.\nIf there's a cycle, you can't finish all courses.\n\nApproach 1: Topological sort (Kahn's) — if all nodes processed, no cycle.\nApproach 2: DFS with 3 states — unvisited, visiting, visited.\n  If you reach a 'visiting' node again → cycle!\n\ndef canFinish(numCourses, prerequisites):\n    graph = defaultdict(list)\n    for a, b in prerequisites: graph[b].append(a)\n    state = [0] * numCourses  # 0=unvisited 1=visiting 2=done\n    def dfs(node):\n        if state[node] == 1: return False  # cycle\n        if state[node] == 2: return True\n        state[node] = 1\n        for nb in graph[node]:\n            if not dfs(nb): return False\n        state[node] = 2; return True\n    return all(dfs(i) for i in range(numCourses))" },
+          { name: "Word Ladder", link: "https://leetcode.com/problems/word-ladder/", note: "Difficulty: Hard | Pattern: BFS Shortest Path\n\nEach word is a node. Edge exists if words differ by 1 letter.\nFind shortest path from beginWord to endWord.\n\nKey insight: BFS guarantees shortest path.\nFor each word, try changing each character to a-z.\nIf the result is in wordList → valid neighbour.\n\nTime: O(M² × N) where M=word length, N=wordList size." },
+        ]
+      },
+      {
+        name: "Backtracking", weeks: "Wk 7–8",
+        note: "⚡ Microsoft asks backtracking more than most companies. Don't skip.",
+        concepts: [
+          { label: "The choose → explore → un-choose pattern", note: "Backtracking = systematic trial-and-error.\nYou build a solution incrementally, abandoning branches\nthat can't lead to a valid solution.\n\nThe pattern is ALWAYS:\n1. Choose: add something to your current path\n2. Explore: recurse deeper\n3. Un-choose: remove it (backtrack)\n\ndef backtrack(path, choices):\n    if is_solution(path):\n        result.append(path[:])\n        return\n    for choice in choices:\n        if is_valid(choice, path):\n            path.append(choice)    # 1. choose\n            backtrack(path, ...)   # 2. explore\n            path.pop()             # 3. un-choose\n\nThis framework solves: subsets, permutations, combinations,\nN-Queens, Sudoku, Word Search." },
+          { label: "Pruning — skipping invalid branches early", note: "Pruning = adding checks to avoid exploring dead ends.\nThis is what separates O(n!) from manageable runtime.\n\nExample: Combination Sum with target\n  After sorting, if current num > remaining target → stop.\n  No need to try larger numbers.\n\nExample: N-Queens\n  Check column, diagonal, anti-diagonal conflicts.\n  If placing queen causes conflict → skip that column.\n\nAlways ask: 'can I tell early that this branch is hopeless?'\nIf yes, add a check before the recursive call." },
+        ],
+        leetcode: [
+          { name: "Subsets", link: "https://leetcode.com/problems/subsets/", note: "Difficulty: Medium | Pattern: Backtracking\n\nGenerate all 2^n subsets.\n\ndef subsets(nums):\n    result = []\n    def bt(start, path):\n        result.append(path[:])   # every path is a valid subset\n        for i in range(start, len(nums)):\n            path.append(nums[i])\n            bt(i+1, path)\n            path.pop()\n    bt(0, [])\n    return result\n\nNote: we append at the START (before the loop),\nnot at a base case. Every partial path is valid." },
+          { name: "Permutations", link: "https://leetcode.com/problems/permutations/", note: "Difficulty: Medium | Pattern: Backtracking with used-set\n\ndef permute(nums):\n    result = []\n    def bt(path, used):\n        if len(path) == len(nums):\n            result.append(path[:]); return\n        for i, n in enumerate(nums):\n            if i not in used:\n                path.append(n); used.add(i)\n                bt(path, used)\n                path.pop(); used.remove(i)\n    bt([], set())\n    return result\n\nDifference from subsets: can pick same index multiple times\nin different positions, so track which indices are 'used'." },
+          { name: "Combination Sum", link: "https://leetcode.com/problems/combination-sum/", note: "Difficulty: Medium | Pattern: Backtracking with reuse\n\nCan reuse the same element. No duplicates in input.\n\ndef combinationSum(candidates, target):\n    candidates.sort()  # enables early pruning\n    result = []\n    def bt(start, path, remaining):\n        if remaining == 0: result.append(path[:]); return\n        for i in range(start, len(candidates)):\n            if candidates[i] > remaining: break  # pruning!\n            path.append(candidates[i])\n            bt(i, path, remaining - candidates[i])  # i not i+1 (reuse)\n            path.pop()\n    bt(0, [], target)\n    return result" },
+          { name: "Word Search", link: "https://leetcode.com/problems/word-search/", note: "Difficulty: Medium | Pattern: DFS Backtracking on Grid\n\nFor each cell, DFS trying to match the word.\nMark visited by temporarily replacing cell with '#'.\nRestore after backtracking.\n\ndef exist(board, word):\n    rows, cols = len(board), len(board[0])\n    def dfs(r, c, i):\n        if i == len(word): return True\n        if r<0 or r>=rows or c<0 or c>=cols: return False\n        if board[r][c] != word[i]: return False\n        tmp, board[r][c] = board[r][c], '#'  # mark\n        found = any(dfs(r+dr,c+dc,i+1) for dr,dc in [(-1,0),(1,0),(0,-1),(0,1)])\n        board[r][c] = tmp  # restore\n        return found\n    return any(dfs(r,c,0) for r in range(rows) for c in range(cols))" },
+        ]
+      },
+      {
+        name: "Dynamic Programming", weeks: "Wk 8–10",
+        concepts: [
+          { label: "Memoization (Top-down DP)", note: "Memoization = recursion + cache.\nSolve the problem recursively, but cache results\nso you never compute the same subproblem twice.\n\nfrom functools import lru_cache\n\n@lru_cache(maxsize=None)\ndef fib(n):\n    if n <= 1: return n\n    return fib(n-1) + fib(n-2)\n\nOr manually:\nmemo = {}\ndef fib(n):\n    if n in memo: return memo[n]\n    if n <= 1: return n\n    memo[n] = fib(n-1) + fib(n-2)\n    return memo[n]\n\nTime: O(n) — each subproblem solved once.\nThink top-down: big problem → smaller subproblems." },
+          { label: "Tabulation (Bottom-up DP)", note: "Tabulation = fill a table iteratively from base cases up.\nNo recursion — avoids stack overflow for large inputs.\n\nFibonacci:\ndp = [0] * (n+1)\ndp[1] = 1\nfor i in range(2, n+1):\n    dp[i] = dp[i-1] + dp[i-2]\nreturn dp[n]\n\nThink bottom-up: solve small subproblems first,\nbuild toward the answer.\n\nSpace optimization: if dp[i] only needs dp[i-1] and dp[i-2],\nyou only need two variables:\na, b = 0, 1\nfor _ in range(n-1): a, b = b, a+b" },
+          { label: "2D DP — grid and string problems", note: "2D DP uses a grid where dp[i][j] depends on\nnearby cells.\n\nLongest Common Subsequence:\ndp[i][j] = LCS of text1[:i] and text2[:j]\n\nif text1[i-1] == text2[j-1]:\n    dp[i][j] = dp[i-1][j-1] + 1\nelse:\n    dp[i][j] = max(dp[i-1][j], dp[i][j-1])\n\nCommon 2D DP problems:\n- LCS (strings)\n- Edit Distance (strings)\n- Unique Paths (grid)\n- Coin Change 2 (knapsack variant)\n\nAlways define: what does dp[i][j] represent?" },
+        ],
+        leetcode: [
+          { name: "Climbing Stairs", link: "https://leetcode.com/problems/climbing-stairs/", note: "Difficulty: Easy | Pattern: 1D DP (Fibonacci variant)\n\ndp[i] = number of ways to reach step i\ndp[1] = 1, dp[2] = 2\ndp[i] = dp[i-1] + dp[i-2]\n\nThis is literally Fibonacci. If you're on step i,\nyou came from i-1 (one step) or i-2 (two steps)." },
+          { name: "Coin Change", link: "https://leetcode.com/problems/coin-change/", note: "Difficulty: Medium | Pattern: 1D DP (Unbounded Knapsack)\n\ndp[i] = min coins to make amount i\n\ndp = [inf] * (amount+1)\ndp[0] = 0\nfor coin in coins:\n    for i in range(coin, amount+1):\n        dp[i] = min(dp[i], dp[i-coin] + 1)\nreturn dp[amount] if dp[amount] != inf else -1\n\nInner loop builds up: for each coin, update all amounts." },
+          { name: "Longest Common Subsequence", link: "https://leetcode.com/problems/longest-common-subsequence/", note: "Difficulty: Medium | Pattern: 2D DP\n\nm, n = len(text1), len(text2)\ndp = [[0]*(n+1) for _ in range(m+1)]\nfor i in range(1, m+1):\n    for j in range(1, n+1):\n        if text1[i-1] == text2[j-1]:\n            dp[i][j] = dp[i-1][j-1] + 1\n        else:\n            dp[i][j] = max(dp[i-1][j], dp[i][j-1])\nreturn dp[m][n]" },
+          { name: "Edit Distance", link: "https://leetcode.com/problems/edit-distance/", note: "Difficulty: Medium | Pattern: 2D DP (String transformation)\n\ndp[i][j] = min ops to convert word1[:i] to word2[:j]\n\nif word1[i-1] == word2[j-1]: dp[i][j] = dp[i-1][j-1]\nelse: dp[i][j] = 1 + min(\n    dp[i-1][j],    # delete\n    dp[i][j-1],    # insert\n    dp[i-1][j-1]   # replace\n)\n\nBase case: dp[i][0] = i (delete all), dp[0][j] = j (insert all)." },
+        ]
+      },
+    ]
+  },
+
+  // ── PHASE 2: SYSTEM DESIGN ─────────────────────────────
+  {
+    id: 2, label: "PHASE 03", title: "System Design",
+    duration: "Weeks 8–14", color: "#A8FF3E",
+    goal: "Go from zero to confidently designing scalable systems for 45 minutes. Microsoft expects Azure-first thinking — learn their ecosystem, not just generic concepts.",
+    warning: "Internship interviews CAN include simplified system design, especially for competitive slots. Don't gamble — prep it.",
+    approach: "The framework: (1) Clarify requirements — functional & non-functional. (2) Estimate scale — DAU, QPS, storage. (3) High-level design — boxes and arrows. (4) Deep dive — 2-3 components in detail. (5) Trade-offs — always frame choices as trade-offs, never absolutes.",
+    resource: "Alex Xu 'System Design Interview Vol 1' + Gaurav Sen YouTube",
+    concepts: [
+      {
+        section: "Fundamentals",
+        items: [
+          { label: "Horizontal vs vertical scaling", note: "Vertical scaling: bigger machine (more CPU/RAM). Simple but has a ceiling. Expensive.\nHorizontal scaling: more machines. Theoretically unlimited. Needs load balancer.\n\nWhen MS asks: they want to see you default to horizontal scaling\nfor internet-scale systems (millions of users).\n\nTrade-off: horizontal adds complexity (distributed coordination,\ndata consistency, network latency)." },
+          { label: "CAP Theorem", note: "A distributed system can only guarantee 2 of 3:\n  C = Consistency (all nodes see same data)\n  A = Availability (always responds)\n  P = Partition Tolerance (works despite network splits)\n\nSince P (network partitions) are unavoidable in distributed systems,\nyou're really choosing between CP and AP.\n\nCP example: bank transactions (consistency is critical)\nAP example: social media feed (slightly stale is fine)\n\nMS angle: CosmosDB lets you tune this — it offers multiple\nconsistency levels (strong, bounded staleness, eventual, etc.)" },
+          { label: "SQL vs NoSQL — when to pick which", note: "SQL (PostgreSQL, Azure SQL):\n  ✓ Complex queries, joins\n  ✓ Strong consistency (ACID transactions)\n  ✓ Well-defined schema\n  Use for: financial data, user accounts, inventory\n\nNoSQL (CosmosDB, MongoDB, Redis):\n  ✓ Horizontal scaling\n  ✓ Flexible schema (documents)\n  ✓ Extremely high throughput (key-value)\n  Use for: user sessions, product catalog, real-time feeds\n\nMS interview tip: knowing CosmosDB (MS's NoSQL) by name + its\nconsistency models will impress." },
+          { label: "Caching strategies", note: "Cache = fast in-memory store (Redis, Memcached) in front of slow DB.\n\nCache-aside (lazy loading): app checks cache first.\n  If miss → read DB → write to cache → return.\n  Cache only holds what's actually requested.\n\nWrite-through: write to cache AND DB simultaneously.\n  Cache always consistent. Extra write latency.\n\nWrite-back (write-behind): write to cache only, flush to DB async.\n  Faster writes. Risk of data loss.\n\nCache invalidation: hardest problem. Options:\n  TTL (expire after N seconds), event-driven (invalidate on write)." },
+          { label: "Message queues — when to use", note: "Message queue (Azure Service Bus, Kafka) decouples services.\n\nUse when:\n- Task takes too long for a synchronous response (email sending)\n- Need to absorb traffic spikes (buffer between producer/consumer)\n- Fan-out: one event → many consumers\n\nDirect API call is fine when:\n- Response needed immediately\n- Simple, fast operation\n- Strong consistency required\n\nMS expects you to know: Azure Service Bus (guaranteed delivery, ordering)\nvs Azure Event Hub (high-throughput streaming, Kafka-compatible)." },
+        ]
+      },
+      {
+        section: "Azure Ecosystem — Use These Names in Interviews",
+        items: [
+          { label: "Azure Blob Storage", note: "Object storage for files, images, videos, backups.\nUnstructured data, any size.\n\nUse for: user uploads, static assets, ML training datasets,\nbackup files, log archives.\n\nTiers: Hot (frequent access), Cool (infrequent), Archive (rare).\n\nMS tip: 'I'd store the user's profile photos in Azure Blob Storage\nwith a CDN in front for low-latency delivery' — this sentence\nwill make your interviewer happy." },
+          { label: "Azure CosmosDB", note: "Microsoft's globally distributed NoSQL database.\nSupports multiple APIs: SQL, MongoDB, Cassandra, Table.\n\nKey features:\n- 99.999% SLA (five nines)\n- < 10ms reads/writes globally\n- Tunable consistency levels (strong → eventual)\n- Multi-region writes\n\nUse for: user profiles, product catalog, real-time leaderboards,\nIoT telemetry, gaming state.\n\nThis is THE NoSQL database to mention in MS design interviews." },
+          { label: "Azure Service Bus vs Event Hub", note: "Service Bus: traditional message queue / pub-sub.\n  - Guaranteed delivery (at-least-once)\n  - Message ordering (FIFO queues)\n  - Dead-letter queue for failures\n  - Use for: order processing, task queues, workflow\n\nEvent Hub: high-throughput event streaming (like Kafka).\n  - Millions of events per second\n  - Retain events for replay (up to 90 days)\n  - Consumer groups for parallel processing\n  - Use for: telemetry, clickstream, real-time analytics\n\nRule of thumb: task → Service Bus, stream → Event Hub." },
+          { label: "Azure Functions — serverless", note: "Run code without managing servers.\nTriggered by events: HTTP, queue messages, timer, blob uploads.\n\nPros:\n  - Scale to zero (no cost when idle)\n  - Auto-scales with load\n  - Pay per execution\n\nCons:\n  - Cold start latency (first request after idle is slow)\n  - Not for long-running tasks (5–10 min timeout)\n  - Stateless (can't store data in memory between calls)\n\nMS design use case: 'I'd use an Azure Function triggered by\nService Bus to process each order asynchronously'." },
+        ]
+      },
+      {
+        section: "Classic Designs — Master These",
+        items: [
+          { label: "URL Shortener (bit.ly)", note: "Functional requirements: shorten URL, redirect to original.\nNon-functional: < 100ms redirect, 100M URLs, 10:1 read/write ratio.\n\nCore design:\n1. Generate unique 6-char code: base62 encode a counter or hash\n2. Store: code → original_url in DB (CosmosDB or Redis cache)\n3. Redirect: GET /{code} → lookup → 301/302 redirect\n\nScale:\n- Cache hot URLs in Redis (most URLs are rarely accessed)\n- Multiple read replicas for DB\n- Rate limit creation API\n\nTrade-off: 301 (permanent, browser caches) vs 302 (temporary,\nevery redirect hits your server — better for analytics)." },
+          { label: "Rate Limiter", note: "Limits number of requests per user per time window.\n\nAlgorithms:\n1. Fixed Window: count requests in fixed time slots. Simple.\n   Problem: burst at window boundary (2x allowed requests).\n\n2. Sliding Window: track exact timestamps. Accurate.\n   Problem: memory per user.\n\n3. Token Bucket: tokens added at rate R, bucket max B.\n   Request consumes 1 token. If empty, reject.\n   Allows bursts (empty then refill).\n\n4. Leaky Bucket: fixed processing rate regardless of burst.\n\nImplementation: Redis + Lua script for atomic increment.\nDistributed: centralized Redis or gossip protocol sync." },
+          { label: "Design OneDrive / Dropbox", note: "This is a classic MS interview question (it's their product).\n\nKey challenges:\n1. File chunking: split large files into 4MB chunks.\n   Upload chunks independently → resume on failure.\n   Hash each chunk → dedup (same chunk never uploaded twice).\n\n2. Sync protocol:\n   Client watches for file changes.\n   Sends diff (changed chunks only) to server.\n   Server notifies other clients via WebSocket/long-poll.\n\n3. Conflict resolution:\n   Two clients edit same file offline.\n   Create conflicted copy with timestamp.\n\nStorage: Azure Blob for chunks. CosmosDB for metadata\n(file tree, chunk references, sharing permissions)." },
+          { label: "Notification System", note: "Send push, email, and SMS notifications at scale.\n\nArchitecture:\n1. API server receives notification request\n2. Publishes to message queue (Azure Service Bus)\n3. Workers consume by type: push worker, email worker, SMS worker\n4. Each worker calls 3rd party provider (FCM, SendGrid, Twilio)\n5. Track delivery status in DB\n\nKey design decisions:\n- Why queue? Absorb spikes, decouple services, retry on failure.\n- Fan-out: for 10M users, must be async — don't block the API.\n- Rate limiting per provider: SendGrid has request limits.\n- Dead letter queue: failed notifications for manual review." },
+        ]
+      },
+    ]
+  },
+
+  // ── PHASE 3: PROJECTS ─────────────────────────────────
+  {
+    id: 3, label: "PHASE 04", title: "Projects That Impress",
+    duration: "Weeks 9–15", color: "#FF3EA8",
+    goal: "Build 2 projects that show you can ship real things and defend every technical decision. Recruiters look for: real users/data, non-trivial architecture, and evidence of your problem-solving.",
+    warning: "A todo app or basic CRUD will actively hurt you. Your project must either solve a real problem OR showcase technical depth that's genuinely interesting.",
+    projects: [
+      {
+        name: "Project 1: Distributed Task Queue",
+        type: "Systems / Backend",
+        why: "Shows you understand concurrency, distributed systems, and can apply CS theory to real code. Directly relevant to MS infra work.",
+        what: [
+          "Build a lightweight job queue in Python (NO Celery — build it yourself)",
+          "Workers poll tasks from Redis or SQLite",
+          "Priority queues — urgent vs background jobs",
+          "Retry logic with exponential backoff",
+          "Dead letter queue for permanently failed jobs",
+          "Simple React dashboard to monitor queue depth & worker status",
+          "Docker Compose to run everything locally",
+          "Deploy to Azure Container Apps (free tier)",
+        ],
+        stack: "Python (FastAPI) + Redis + SQLite/Postgres + React dashboard",
+        deploy: "Docker Compose locally → Azure Container Apps (free tier)",
+        talkingPoints: [
+          "Why polling vs push — and what trade-off you made",
+          "How you handle duplicate task execution (idempotency)",
+          "Your retry strategy and why exponential backoff",
+          "What happens when a worker crashes mid-task",
+        ]
+      },
+      {
+        name: "Project 2: AI Code Review CLI Tool",
+        type: "AI / Developer Tools",
+        why: "Directly in Microsoft's wheelhouse — GitHub Copilot, Azure AI, VS Code. Shows you can build end-to-end AI-powered dev tools.",
+        what: [
+          "CLI tool that takes a git diff and gives AI-powered review comments",
+          "Language-aware: understands Python/JS/C# patterns",
+          "Detects: potential bugs, style issues, security anti-patterns",
+          "Outputs structured JSON review comments",
+          "GitHub Actions integration — runs on every PR automatically",
+          "Stores review history in SQLite for trend analysis",
+          "Publish to PyPI as an installable package",
+        ],
+        stack: "Python + OpenAI/Anthropic API + Click CLI + SQLite + GitHub Actions YAML",
+        deploy: "pip install yourpackage — publish to PyPI",
+        talkingPoints: [
+          "How you prompt the model to give consistent structured output",
+          "How you handle rate limits and API failures gracefully",
+          "Your approach to language detection from file extensions",
+          "Privacy: you're sending code to an API — what are the implications?",
+        ]
+      }
+    ]
+  },
+
+  // ── PHASE 4: INTERVIEW EXECUTION ──────────────────────
+  {
+    id: 4, label: "PHASE 05", title: "Interview Execution",
+    duration: "Weeks 13–16", color: "#FFD700",
+    goal: "Technical skill means nothing if you freeze under pressure. Train the interview itself, not just the content. Most rejections happen here.",
+    warning: "Silence in a coding interview is deadly. Interviewers aren't watching your code — they're evaluating how you think. If you're not talking, you're losing marks.",
+    codingRules: [
+      { label: "Think out loud from second one", note: "The moment you read the problem, start narrating.\n'So we're given an array and need to find... okay. The brute force would be... that's O(n²). Can we do better? What if we used a hash map...'\n\nYour thinking IS the interview. Silence makes interviewers anxious.\nThey want to see your problem-solving process, not just the answer." },
+      { label: "Clarify edge cases before writing any code", note: "Ask before coding:\n- 'Can the input be empty?'\n- 'Can values be negative?'\n- 'Should I handle duplicates?'\n- 'Is the array sorted?'\n\nThis shows engineering maturity. It also helps you avoid\nwriting code that fails on edge cases.\n\nTarget: 2-3 clarifying questions in under 2 minutes." },
+      { label: "State brute force first, then optimize", note: "Always say: 'The brute force would be X — that's O(n²) time and O(1) space. Can we do better?'\n\nThen optimize. This shows:\n1. You understand the problem\n2. You have structured thinking\n3. You know time/space complexity\n\nNever just start with the optimal solution with no explanation." },
+      { label: "Trace through an example by hand before submitting", note: "Before you say 'I'm done', trace your code on a small example.\nStep through it line by line. Check edge cases.\n\nSay: 'Let me trace through with [1,2,3]...'\n\nThis catches ~80% of bugs before the interviewer sees them.\nFinding your own bugs is MUCH better than the interviewer finding them." },
+      { label: "Name variables properly", note: "WRONG:\ndef fn(x, arr, tmp): ...\n\nCORRECT:\ndef twoSum(nums, target): ...\n\nVariable names show that you're thinking about the problem.\nPoor naming suggests you're just memorizing patterns, not understanding.\n\nUse: left/right for pointers, freq for frequency maps,\nvisited for DFS sets, memo for memoization." },
+      { label: "Do 10+ full mock interviews — record yourself", note: "Book Pramp sessions (free), Interviewing.io (paid), or pair with someone.\n\nRecord yourself on your phone. Watch it back. You will cringe —\nthat's the point. You'll notice:\n- Long silences you didn't realize were there\n- Mumbling on explanations\n- Jumping to code before clarifying\n- Forgetting to test your solution\n\n10 mocks minimum before the real thing." },
+    ],
+    behavioral: [
+      { q: "Tell me about yourself", note: "90 seconds max. Formula:\n[Year in school] studying [CS] → [specific technical interest] → [2 relevant projects/experiences] → why Microsoft specifically.\n\nExample:\n'I'm a third-year CS student at [university]. I'm most excited about distributed systems and developer tooling. I built a distributed task queue from scratch and an AI-powered code review CLI. I'm interested in Microsoft because I use GitHub and VS Code daily, and I want to work on tools that millions of developers rely on.'\n\nDo NOT just list your CV. That's boring. Show personality." },
+      { q: "Why Microsoft?", note: "Be specific. Research first.\n\nBAD: 'It's a big company with great opportunities and good culture.'\n\nGOOD: 'I've been using GitHub Copilot while building my projects and I'm fascinated by how they're integrating AI into the developer workflow. I'd love to contribute to that. Also, VS Code is open source and I've been reading the codebase — the extension architecture is really elegant.'\n\nPick something you genuinely use or find interesting. Fake enthusiasm reads as fake." },
+      { q: "Tell me about a hard technical problem you solved", note: "Use STAR: Situation → Task → Action → Result.\n\nThe 'Action' is where most people fail — they stay vague.\n'I implemented the solution' is not enough.\n\nSay: 'I used exponential backoff with jitter because straight exponential backoff causes thundering herd — all retries happen simultaneously. By adding random jitter, retries are spread out over time.'\n\nThat level of specificity is what separates candidates.\nPick a story from your projects." },
+      { q: "How do you handle disagreement in a team?", note: "Microsoft core competency: Growth Mindset.\nSatya Nadella's book is literally called 'Hit Refresh' — it's about this.\n\nFormula: Listen → Evaluate evidence → Either change your mind (with reason) or disagree and commit.\n\n'I try to understand the other perspective first before defending mine. When my teammate suggested X approach, I initially thought Y was better. But after they explained the edge case with Z, I realized they were right. We went with X.' \n\nShow that your ego doesn't block you from being right." },
+      { q: "What Microsoft product would you improve?", note: "Pick something you actually use.\n\nOptions:\n- GitHub: something in Issues, Actions, Copilot\n- VS Code: an extension or UX detail\n- Teams: a specific meeting or notification flow\n- Azure: onboarding complexity\n\nFormula: product → specific friction you've felt → concrete improvement → why it matters to users.\n\n'In VS Code, when I have many open terminals, it's hard to know which terminal is running what. I'd add a 'label-by-last-command' feature that automatically names the terminal tab based on the last significant command run.'" },
+    ]
+  },
+
+  // ── PHASE 5: WEEKLY SCHEDULE ──────────────────────────
+  {
+    id: 5, label: "SCHEDULE", title: "Weekly Plan",
+    duration: "All 16 weeks", color: "#7A9AB0",
+    schedule: [
+      { day: "MON", slots: ["DSA — 2 problems (timed, 25 min each)", "Language syntax — 45 min study"] },
+      { day: "TUE", slots: ["DSA — 2 problems", "System design — 1 concept, take notes"] },
+      { day: "WED", slots: ["DSA — 2 problems", "Project work — 1.5 hr"] },
+      { day: "THU", slots: ["DSA — 2 problems", "Language — implement a pattern from memory"] },
+      { day: "FRI", slots: ["DSA — 2 problems", "Project work — 1.5 hr"] },
+      { day: "SAT", slots: ["System design — full 45 min mock (whiteboard it)", "Project work — 3 hr deep session"] },
+      { day: "SUN", slots: ["Review week's weak DSA spots", "Behavioral prep — 2 STAR stories"] },
+    ],
+    truths: [
+      "You have ~35 weeks until November. 16 weeks of serious prep is enough — but only if you're consistent, not just intense. Intensity for one week then dropping off is worse than slow and steady.",
+      "Quality beats quantity on LeetCode. 150 problems you truly understand will beat 400 you half-did. NeetCode 150 is your list.",
+      "Your projects are your differentiator. A third-year with two solid, deployable projects with real technical depth will beat a candidate with 400 LC solves and nothing to show.",
+      "Microsoft recruiters are humans. They respond to enthusiasm and clarity. Practice explaining your work to non-technical people.",
+      "Start reaching out to Microsoft employees on LinkedIn NOW — not to ask for a referral, but to ask for a 15-minute conversation about their work. Build the relationship first. The referral may come naturally. November is closer than you think.",
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════════════════════
+//  STATE & PERSISTENCE
+// ═══════════════════════════════════════════════════════════
+let state = {
+  activePhase: 0,
+  activeLang: 'Python',
+  checked: {},
+  username: null,
+  binId: null,
+  apiKey: null,
+  syncStatus: 'idle'  // idle | saving | saved | error
+};
+
+// ── Cloud sync via JSONBin ──────────────────────────────────
+// Each user gets their own bin. We store binId+apiKey in
+// localStorage so they only enter it once per device.
+// ?user=moses in the URL is cosmetic only (sharing-friendly).
+
+const JSONBIN_API = 'https://api.jsonbin.io/v3/b';
+
+function lsKey(username) { return `msprep_${username}`; }
+
+async function cloudLoad(username, apiKey) {
+  const stored = JSON.parse(localStorage.getItem(lsKey(username)) || '{}');
+  state.binId = stored.binId || null;
+
+  if (!state.binId) return null; // first time on this device
+  try {
+    const res = await fetch(`${JSONBIN_API}/${state.binId}/latest`, {
+      headers: { 'X-Master-Key': apiKey }
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.record?.checked || null;
+  } catch(e) { return null; }
+}
+
+async function cloudSave(checked) {
+  if (!state.binId || !state.apiKey) return;
+  setSyncStatus('saving');
+  try {
+    await fetch(`${JSONBIN_API}/${state.binId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': state.apiKey },
+      body: JSON.stringify({ checked })
+    });
+    setSyncStatus('saved');
+  } catch(e) { setSyncStatus('error'); }
+}
+
+async function cloudCreate(username, apiKey) {
+  const res = await fetch(JSONBIN_API, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Master-Key': apiKey,
+      'X-Bin-Name': `msprep_${username}`,
+      'X-Bin-Private': 'true'
+    },
+    body: JSON.stringify({ checked: {} })
+  });
+  if (!res.ok) throw new Error('Failed to create bin');
+  const json = await res.json();
+  return json.metadata.id;
+}
+
+function setSyncStatus(s) {
+  state.syncStatus = s;
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  const labels = { idle: '', saving: '↑ syncing…', saved: '✓ synced', error: '⚠ sync failed' };
+  const colors = { idle: '', saving: '#607080', saved: '#4A9A60', error: '#FF6060' };
+  el.textContent = labels[s];
+  el.style.color = colors[s];
+}
+
+// Debounced save — wait 1.5s after last toggle before saving
+let saveTimer = null;
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => cloudSave(state.checked), 1500);
+}
+
+// ── Local fallback ──────────────────────────────────────────
+function localSave() {
+  if (!state.username) return;
+  const stored = JSON.parse(localStorage.getItem(lsKey(state.username)) || '{}');
+  stored.checked = state.checked;
+  if (state.binId) stored.binId = state.binId;
+  localStorage.setItem(lsKey(state.username), JSON.stringify(stored));
+}
+
+function localLoad(username) {
+  const stored = JSON.parse(localStorage.getItem(lsKey(username)) || '{}');
+  state.binId = stored.binId || null;
+  return stored.checked || null;
+}
+
+function toggle(key) {
+  state.checked[key] = !state.checked[key];
+  if (!state.checked[key]) delete state.checked[key];
+  localSave();
+  scheduleSave();
+  updateProgress();
+  const el = document.querySelector(`[data-key="${CSS.escape(key)}"]`);
+  if (el) {
+    const done = !!state.checked[key];
+    el.classList.toggle('done', done);
+    const box = el.querySelector('.checkbox');
+    if (box) {
+      box.style.background = done ? currentColor() : 'transparent';
+      box.style.borderColor = done ? currentColor() : '#2A3A4A';
+      box.textContent = done ? '✓' : '';
+    }
+  }
+}
+
+function currentColor() {
+  return PHASES[state.activePhase]?.color || '#00D4FF';
+}
+
+function allKeys() {
+  const keys = [];
+  PHASES.forEach((p, pi) => {
+    if (p.topics) p.topics.forEach((t, ti) => {
+      t.concepts?.forEach((_,ci) => keys.push(`p${pi}_t${ti}_c${ci}`));
+      t.leetcode?.forEach((_,li) => keys.push(`p${pi}_t${ti}_lc${li}`));
+    });
+    if (p.content) {
+      ['Python','C#'].forEach(lang => {
+        p.content[lang]?.forEach((sec, si) => {
+          sec.items?.forEach((_,ii) => keys.push(`p${pi}_lang_${lang}_${si}_${ii}`));
+        });
+      });
+    }
+    if (p.concepts) p.concepts.forEach((sec, si) => {
+      sec.items?.forEach((_,ii) => keys.push(`p${pi}_sd_${si}_${ii}`));
+    });
+    if (p.projects) p.projects.forEach((proj, pj) => {
+      proj.what?.forEach((_,wi) => keys.push(`p${pi}_proj_${pj}_${wi}`));
+    });
+    if (p.codingRules) p.codingRules.forEach((_,ri) => keys.push(`p${pi}_rule_${ri}`));
+    if (p.behavioral) p.behavioral.forEach((_,bi) => keys.push(`p${pi}_behav_${bi}`));
+  });
+  return keys;
+}
+
+function updateProgress() {
+  const keys = allKeys();
+  const done = keys.filter(k => state.checked[k]).length;
+  const pct = keys.length ? Math.round(done / keys.length * 100) : 0;
+  document.getElementById('progress-bar-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent = `${done} / ${keys.length} items completed`;
+}
+
+// ── Setup modal ─────────────────────────────────────────────
+function showSetupModal(onDone) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:1000;
+    display:flex;align-items:center;justify-content:center;padding:20px;`;
+
+  overlay.innerHTML = `
+    <div style="background:#0D1117;border:1px solid #1A2030;border-top:3px solid #00D4FF;
+                border-radius:3px;padding:32px;max-width:480px;width:100%;font-family:'IBM Plex Mono',monospace;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.15em;color:#fff;margin-bottom:6px">SET UP SYNC</div>
+      <div style="font-size:11px;color:#607080;line-height:1.7;margin-bottom:24px">
+        Your progress will sync across all your devices.<br>
+        Each person needs their own JSONBin API key — it's free.
+      </div>
+
+      <div style="font-size:10px;color:#405060;letter-spacing:.12em;font-weight:700;margin-bottom:18px">HOW TO GET YOUR FREE API KEY (2 min)</div>
+      <ol style="font-size:11px;color:#607080;line-height:2;padding-left:18px;margin-bottom:24px">
+        <li>Go to <a href="https://jsonbin.io" target="_blank" style="color:#00D4FF">jsonbin.io</a></li>
+        <li>Sign in with GitHub (you already have one)</li>
+        <li>Go to API Keys → Copy your Master Key</li>
+        <li>Paste it below</li>
+      </ol>
+
+      <div style="margin-bottom:14px">
+        <label style="font-size:10px;color:#405060;letter-spacing:.12em;font-weight:700;display:block;margin-bottom:6px">YOUR NAME (lowercase, no spaces)</label>
+        <input id="setup-name" placeholder="e.g. moses" style="width:100%;background:#080B0F;border:1px solid #2A3A4A;color:#C8D8E8;
+               padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:12px;border-radius:2px;outline:none;">
+      </div>
+
+      <div style="margin-bottom:22px">
+        <label style="font-size:10px;color:#405060;letter-spacing:.12em;font-weight:700;display:block;margin-bottom:6px">JSONBIN MASTER KEY</label>
+        <input id="setup-key" type="password" placeholder="$2b$10$..." style="width:100%;background:#080B0F;border:1px solid #2A3A4A;color:#C8D8E8;
+               padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:12px;border-radius:2px;outline:none;">
+        <div style="font-size:10px;color:#304050;margin-top:5px">Stored only in your browser. Never sent anywhere except JSONBin.</div>
+      </div>
+
+      <div id="setup-error" style="font-size:11px;color:#FF6060;margin-bottom:12px;display:none"></div>
+
+      <button id="setup-btn" style="width:100%;background:#00D4FF;color:#000;border:none;padding:12px;
+              font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;letter-spacing:.1em;
+              cursor:pointer;border-radius:2px;">CONNECT & START</button>
+
+      <div style="text-align:center;margin-top:14px">
+        <button id="setup-skip" style="background:none;border:none;color:#304050;font-family:'IBM Plex Mono',monospace;
+                font-size:11px;cursor:pointer;text-decoration:underline;">Skip for now — use local only</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+
+  document.getElementById('setup-btn').onclick = async () => {
+    const name = document.getElementById('setup-name').value.trim().toLowerCase().replace(/\s+/g,'_');
+    const key  = document.getElementById('setup-key').value.trim();
+    const errEl = document.getElementById('setup-error');
+    const btn = document.getElementById('setup-btn');
+
+    if (!name) { errEl.textContent = 'Enter your name.'; errEl.style.display='block'; return; }
+    if (!key)  { errEl.textContent = 'Enter your API key.'; errEl.style.display='block'; return; }
+
+    btn.textContent = 'CONNECTING…'; btn.disabled = true;
+
+    try {
+      state.username = name;
+      state.apiKey = key;
+
+      // Check if they already have a bin from another device
+      const existing = localLoad(name);
+      if (state.binId) {
+        // bin exists from localStorage — just verify it works
+        const cloud = await cloudLoad(name, key);
+        if (cloud) state.checked = cloud;
+        else if (existing) state.checked = existing;
+      } else {
+        // First time ever — create a new bin
+        const binId = await cloudCreate(name, key);
+        state.binId = binId;
+        if (existing) {
+          // Migrate any existing local data up to cloud
+          state.checked = existing;
+          await cloudSave(existing);
+        }
+      }
+
+      // Save credentials to localStorage
+      const stored = JSON.parse(localStorage.getItem(lsKey(name)) || '{}');
+      stored.binId = state.binId;
+      stored.apiKey = key;  // save key so they don't re-enter on this device
+      stored.checked = state.checked;
+      localStorage.setItem(lsKey(name), JSON.stringify(stored));
+
+      document.body.removeChild(overlay);
+      onDone();
+    } catch(e) {
+      errEl.textContent = 'Could not connect. Check your API key and try again.';
+      errEl.style.display = 'block';
+      btn.textContent = 'CONNECT & START'; btn.disabled = false;
+    }
+  };
+
+  document.getElementById('setup-skip').onclick = () => {
+    state.username = 'local';
+    const existing = localLoad('local');
+    if (existing) state.checked = existing;
+    document.body.removeChild(overlay);
+    onDone();
+  };
+}
+
+// ── Init ────────────────────────────────────────────────────
+async function initUser() {
+  // Check ?user= param for convenience link sharing
+  const urlUser = new URLSearchParams(window.location.search).get('user');
+
+  // Check if we already know this user on this device
+  const tryUser = urlUser || 'local';
+  const stored = JSON.parse(localStorage.getItem(lsKey(tryUser)) || '{}');
+
+  if (stored.apiKey && stored.binId) {
+    // Returning user on known device — auto-login
+    state.username = tryUser;
+    state.apiKey = stored.apiKey;
+    state.binId = stored.binId;
+    state.checked = stored.checked || {};
+
+    // Load from cloud in background
+    cloudLoad(tryUser, stored.apiKey).then(cloud => {
+      if (cloud) {
+        state.checked = cloud;
+        localSave();
+        renderMain();
+        updateProgress();
+        setSyncStatus('saved');
+      }
+    });
+
+    renderApp();
+  } else if (stored.checked && !stored.apiKey) {
+    // Has local data but no cloud setup
+    state.username = tryUser;
+    state.checked = stored.checked;
+    renderApp();
+    showSetupModal(() => { renderApp(); });
+  } else {
+    // Brand new — show setup first
+    renderApp();
+    showSetupModal(() => { renderApp(); });
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SIDEBAR
+// ═══════════════════════════════════════════════════════════
+function renderSidebar() {
+  const nav = document.getElementById('sidebar');
+  nav.innerHTML = '';
+  PHASES.forEach((p, i) => {
+    if (i === 5) { // divider before schedule
+      const d = document.createElement('div'); d.className = 'nav-divider'; nav.appendChild(d);
+    }
+    const btn = document.createElement('button');
+    btn.className = 'nav-btn' + (i === state.activePhase ? ' active' : '');
+    btn.style.setProperty('--phase-color', p.color);
+    btn.innerHTML = `<div class="nav-label">${p.label}</div><div class="nav-title">${p.title}</div><div class="nav-dur">${p.duration}</div>`;
+    btn.onclick = () => { state.activePhase = i; renderSidebar(); renderMain(); };
+    nav.appendChild(btn);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════
+function checkRow(key, label, note, color) {
+  const done = !!state.checked[key];
+  const div = document.createElement('div');
+  div.className = 'check-row' + (done ? ' done' : '');
+  div.setAttribute('data-key', key);
+
+  const hasNote = note && note.trim();
+  div.innerHTML = `
+    <div class="checkbox" style="background:${done ? color : 'transparent'};border-color:${done ? color : '#2A3A4A'}">${done ? '✓' : ''}</div>
+    <div style="flex:1">
+      <div class="check-label" style="display:flex;align-items:center;gap:8px;justify-content:space-between">
+        <span>${escHtml(label)}</span>
+        ${hasNote ? `<span style="font-size:10px;color:${color};flex-shrink:0;opacity:.7;cursor:pointer" data-note-toggle>▸ notes</span>` : ''}
+      </div>
+      ${hasNote ? `<div class="notes-panel"><pre>${escHtml(note)}</pre></div>` : ''}
+    </div>`;
+
+  div.querySelector('.checkbox').addEventListener('click', e => { e.stopPropagation(); toggle(key); });
+
+  if (hasNote) {
+    const noteBtn = div.querySelector('[data-note-toggle]');
+    const panel = div.querySelector('.notes-panel');
+    noteBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const open = panel.classList.toggle('open');
+      noteBtn.textContent = open ? '▾ notes' : '▸ notes';
+    });
+  }
+
+  return div;
+}
+
+function sectionHead(text) {
+  const d = document.createElement('div');
+  d.className = 'section-head';
+  d.textContent = text;
+  return d;
+}
+
+function card(children) {
+  const d = document.createElement('div');
+  d.className = 'card';
+  children.forEach(c => c && d.appendChild(c));
+  return d;
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function warn(text) {
+  const d = document.createElement('div');
+  d.className = 'warn';
+  d.textContent = '⚠ ' + text;
+  return d;
+}
+
+function approach(text, color) {
+  const d = document.createElement('div');
+  d.className = 'approach';
+  d.style.borderLeftColor = color;
+  d.textContent = text;
+  return d;
+}
+
+function phaseHeader(p) {
+  const wrap = document.createElement('div');
+  wrap.className = 'phase-header';
+  wrap.innerHTML = `
+    <div class="phase-num" style="color:${p.color}">${String(p.id+1).padStart(2,'0')}</div>
+    <div class="phase-eyebrow" style="color:${p.color}">${p.label} · ${p.duration}</div>
+    <div class="phase-title">${p.title}</div>
+    <div class="phase-goal">${escHtml(p.goal)}</div>`;
+  return wrap;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MAIN RENDER
+// ═══════════════════════════════════════════════════════════
+function renderMain() {
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+  const p = PHASES[state.activePhase];
+  const color = p.color;
+
+  // PHASE 0: Language Foundations
+  if (p.id === 0) {
+    main.appendChild(phaseHeader(p));
+    main.appendChild(warn(p.warning));
+    main.appendChild(approach(p.approach, color));
+
+    // GitHub hosting banner
+    const banner = document.createElement('div');
+    banner.id = 'gh-banner';
+    banner.innerHTML = `<strong>📁 GitHub Pages Hosting:</strong> Push this <code>index.html</code> file to a repo → Settings → Pages → Source: main branch. Your URL: <code>https://yourusername.github.io/reponame</code>. That's it. No build step.`;
+    main.appendChild(banner);
+
+    // Lang tabs
+    const tabs = document.createElement('div');
+    tabs.className = 'lang-tabs';
+    ['Python','C#'].forEach(lang => {
+      const btn = document.createElement('button');
+      btn.className = 'lang-tab' + (state.activeLang === lang ? ' active' : '');
+      btn.style.borderColor = state.activeLang === lang ? color : '';
+      btn.style.background = state.activeLang === lang ? color : '';
+      btn.style.color = state.activeLang === lang ? '#000' : '';
+      btn.textContent = lang;
+      btn.onclick = () => { state.activeLang = lang; renderMain(); };
+      tabs.appendChild(btn);
+    });
+    main.appendChild(tabs);
+
+    const langData = p.content[state.activeLang];
+    langData.forEach((sec, si) => {
+      main.appendChild(sectionHead(sec.section));
+      const items = sec.items.map((item, ii) =>
+        checkRow(`p0_lang_${state.activeLang}_${si}_${ii}`, item.label, item.note, color)
+      );
+      main.appendChild(card(items));
+    });
+    return;
+  }
+
+  // PHASE 1: DSA
+  if (p.id === 1) {
+    main.appendChild(phaseHeader(p));
+    main.appendChild(warn(p.warning));
+    main.appendChild(approach(p.approach + ' | Resource: ' + p.resource, color));
+
+    p.topics.forEach((topic, ti) => {
+      // Topic header card
+      const topicHead = document.createElement('div');
+      topicHead.style.cssText = `display:flex;align-items:center;gap:10px;margin:22px 0 10px;`;
+      topicHead.innerHTML = `
+        <span class="tag" style="background:${color}18;color:${color};border:1px solid ${color}30">${topic.weeks}</span>
+        <span style="font-size:15px;font-weight:700;color:#fff">${topic.name}</span>
+        ${topic.note ? `<span style="font-size:11px;color:#FFB830;margin-left:4px">${topic.note}</span>` : ''}`;
+      main.appendChild(topicHead);
+
+      // Concepts
+      main.appendChild(sectionHead('Concepts'));
+      const conceptItems = topic.concepts.map((c, ci) =>
+        checkRow(`p1_t${ti}_c${ci}`, c.label, c.note, color)
+      );
+      main.appendChild(card(conceptItems));
+
+      // LeetCode
+      main.appendChild(sectionHead('LeetCode Problems'));
+      const lcItems = topic.leetcode.map((lc, li) => {
+        const row = checkRow(`p1_t${ti}_lc${li}`, lc.name, lc.note, color);
+        // Make name a link
+        const labelSpan = row.querySelector('.check-label span');
+        if (labelSpan && lc.link) {
+          labelSpan.innerHTML = `<a href="${lc.link}" target="_blank" style="color:inherit;text-decoration:underline;text-underline-offset:2px;">${escHtml(lc.name)}</a>`;
+        }
+        return row;
+      });
+      main.appendChild(card(lcItems));
+    });
+    return;
+  }
+
+  // PHASE 2: System Design
+  if (p.id === 2) {
+    main.appendChild(phaseHeader(p));
+    main.appendChild(warn(p.warning));
+    main.appendChild(approach(p.approach, color));
+
+    p.concepts.forEach((sec, si) => {
+      main.appendChild(sectionHead(sec.section));
+      const items = sec.items.map((item, ii) =>
+        checkRow(`p2_sd_${si}_${ii}`, item.label, item.note, color)
+      );
+      main.appendChild(card(items));
+    });
+    return;
+  }
+
+  // PHASE 3: Projects
+  if (p.id === 3) {
+    main.appendChild(phaseHeader(p));
+    main.appendChild(warn(p.warning));
+
+    p.projects.forEach((proj, pj) => {
+      const projCard = document.createElement('div');
+      projCard.className = 'card';
+      projCard.style.borderTop = `3px solid ${color}`;
+      projCard.style.marginBottom = '16px';
+
+      const projHead = document.createElement('div');
+      projHead.style.cssText = 'padding:16px;border-bottom:1px solid #1A2030;';
+      projHead.innerHTML = `
+        <span class="tag" style="background:${color}18;color:${color};border:1px solid ${color}30">${escHtml(proj.type)}</span>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.1em;color:#fff;margin:8px 0 4px">${escHtml(proj.name)}</div>
+        <div style="font-size:12px;color:#8090A0;line-height:1.6">${escHtml(proj.why)}</div>`;
+      projCard.appendChild(projHead);
+
+      main.appendChild(sectionHead('What to Build'));
+      proj.what.forEach((item, wi) => {
+        projCard.appendChild(checkRow(`p3_proj_${pj}_${wi}`, item, null, color));
+      });
+
+      const meta = document.createElement('div');
+      meta.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 16px;background:#070A0D;border-top:1px solid #1A2030;';
+      meta.innerHTML = `
+        <div><div style="font-size:10px;color:#405060;letter-spacing:.12em;font-weight:700;margin-bottom:4px">STACK</div><div style="font-size:11px;color:#607080">${escHtml(proj.stack)}</div></div>
+        <div><div style="font-size:10px;color:#405060;letter-spacing:.12em;font-weight:700;margin-bottom:4px">DEPLOY</div><div style="font-size:11px;color:#607080">${escHtml(proj.deploy)}</div></div>`;
+      projCard.appendChild(meta);
+
+      const talkHead = document.createElement('div');
+      talkHead.style.cssText = 'padding:10px 16px 4px;font-size:10px;color:#405060;letter-spacing:.12em;font-weight:700';
+      talkHead.textContent = 'INTERVIEW TALKING POINTS';
+      projCard.appendChild(talkHead);
+      proj.talkingPoints.forEach(tp => {
+        const tpEl = document.createElement('div');
+        tpEl.style.cssText = 'padding:7px 16px;font-size:12px;color:#607080;border-bottom:1px solid #0E1318;line-height:1.6';
+        tpEl.textContent = '→ ' + tp;
+        projCard.appendChild(tpEl);
+      });
+
+      main.appendChild(projCard);
+    });
+    return;
+  }
+
+  // PHASE 4: Interview Execution
+  if (p.id === 4) {
+    main.appendChild(phaseHeader(p));
+    main.appendChild(warn(p.warning));
+
+    main.appendChild(sectionHead('Coding Interview Rules'));
+    const rules = p.codingRules.map((r, ri) =>
+      checkRow(`p4_rule_${ri}`, r.label, r.note, color)
+    );
+    main.appendChild(card(rules));
+
+    main.appendChild(sectionHead('Behavioral — These Exact Questions'));
+    p.behavioral.forEach((b, bi) => {
+      const bCard = document.createElement('div');
+      bCard.className = 'card';
+      bCard.style.marginBottom = '10px';
+      const row = checkRow(`p4_behav_${bi}`, '"' + b.q + '"', b.note, color);
+      bCard.appendChild(row);
+      main.appendChild(bCard);
+    });
+    return;
+  }
+
+  // PHASE 5: Schedule
+  if (p.id === 5) {
+    main.appendChild(phaseHeader(p));
+
+    const grid = document.createElement('div');
+    grid.className = 'sched-grid';
+    p.schedule.forEach(day => {
+      const card = document.createElement('div');
+      card.className = 'sched-card';
+      card.innerHTML = `<div class="sched-day">${day.day}</div>` +
+        day.slots.map(s => `<div class="sched-slot">${escHtml(s)}</div>`).join('');
+      grid.appendChild(card);
+    });
+    main.appendChild(grid);
+
+    main.appendChild(sectionHead('The Hard Truths'));
+    const truthList = document.createElement('div');
+    p.truths.forEach((t, ti) => {
+      const row = document.createElement('div');
+      row.className = 'truth-row';
+      row.innerHTML = `<div class="truth-num">${String(ti+1).padStart(2,'0')}</div><div class="truth-text">${escHtml(t)}</div>`;
+      truthList.appendChild(row);
+    });
+    main.appendChild(truthList);
+    return;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+function renderApp() {
+  const nameEl = document.getElementById('user-name-val');
+  if (nameEl) nameEl.textContent = state.username || '—';
+  renderSidebar();
+  renderMain();
+  updateProgress();
+}
+
+initUser();
+
+</script>
+</body>
+</html>
